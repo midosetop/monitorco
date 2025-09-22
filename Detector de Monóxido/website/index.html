@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard | Detector de Monóxido de Carbono</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; }
+        #map { height: 65vh; width: 100%; border-bottom: 1px solid #ccc; }
+        .dashboard { padding: 25px; text-align: center; }
+        .dashboard h1 { margin-top: 0; color: #1c1e21; }
+        .card-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px 30px; min-width: 220px; }
+        .card h2 { margin-top: 0; font-size: 1.2em; color: #606770; }
+        .card .value { font-size: 3em; font-weight: 700; line-height: 1.2; }
+        .status-safe { color: #28a745; }
+        .status-warning { color: #ffc107; }
+        .status-danger { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <h1>Monitoramento de Monóxido de Carbono</h1>
+    <div class="card-container">
+        <div class="card">
+            <h2>Nível Atual (PPM)</h2>
+            <p class="value" id="current-ppm">--</p>
+        </div>
+        <div class="card">
+            <h2>Status</h2>
+            <p class="value" id="current-status">Aguardando dados...</p>
+        </div>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+    // ==================================================================
+    //    COLE AQUI A CONFIGURAÇÃO DO FIREBASE FORNECIDA PELO SEU GRUPO
+    // ==================================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s",
+      authDomain: "mostra-f2718.firebaseapp.com",
+      databaseURL: "https://mostra-f2718-default-rtdb.firebaseio.com",
+      projectId: "mostra-f2718",
+      storageBucket: "mostra-f2718.firebasestorage.app",
+      messagingSenderId: "581453261928",
+      appId: "1:581453261928:web:5b92c9aa0cf0cbe4fd5fdd"
+    };
+    // ==================================================================
+
+    // O restante do código JavaScript...
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const map = L.map('map').setView([-19.9208, -44.0542], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    const markers = {};
+    function updateDashboard(data) {
+        const ppm = data.ppm;
+        const ppmElement = document.getElementById('current-ppm');
+        const statusElement = document.getElementById('current-status');
+        ppmElement.textContent = ppm;
+        statusElement.className = "value"; 
+        if (ppm < 50) {
+            statusElement.textContent = "Seguro";
+            statusElement.classList.add('status-safe');
+        } else if (ppm < 100) {
+            statusElement.textContent = "Atenção";
+            statusElement.classList.add('status-warning');
+        } else {
+            statusElement.textContent = "Perigo";
+            statusElement.classList.add('status-danger');
+        }
+    }
+    function updateMapMarker(id, data) {
+        const { lat, lng, ppm } = data;
+        let color = '#28a745';
+        if (ppm >= 100) color = '#dc3545';
+        else if (ppm >= 50) color = '#ffc107';
+        if (!markers[id]) {
+            markers[id] = L.circleMarker([lat, lng], {
+                radius: 10,
+                fillOpacity: 0.8,
+                stroke: false
+            }).addTo(map);
+        }
+        markers[id].setStyle({ fillColor: color });
+        markers[id].bindPopup(`<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`);
+    }
+    const devicesRef = database.ref('dispositivos');
+    devicesRef.on('value', (snapshot) => {
+        const allDevices = snapshot.val();
+        if (!allDevices) {
+            console.log("Nenhum dado encontrado.");
+            return;
+        }
+        console.log("Dados recebidos:", allDevices);
+        for (const deviceId in allDevices) {
+            const deviceData = allDevices[deviceId];
+            updateMapMarker(deviceId, deviceData);
+            if (deviceId === 'detector01') {
+                updateDashboard(deviceData);
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
