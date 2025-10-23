@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Monitoramento de CO</title>
+    <title>Painel de Controle - Detector de CO</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/jpeg" href="favicon.jpeg">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="icon" type="image/png" href="favicon.png"> <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; }
@@ -22,112 +21,106 @@
         .status-warning { color: #ffc107; }
         .status-danger { color: #dc3545; }
 
-        .room-panel-container {
-            padding: 20px 25px;
-            background-color: #fff;
-            text-align: center;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .room-panel-container h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
-
-        #room-panel {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            padding-bottom: 20px;
-        }
-
-        .room-card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            min-width: 200px;
-            text-align: left;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border-left-width: 6px;
-        }
-
-        .room-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        .room-card h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 1.2em;
-            color: #1c1e21;
-        }
-
-        .room-card p {
-            font-size: 1.5em;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .room-card.status-safe {
-            border-left-color: #28a745;
-        }
+        /* Estilos do Painel de Status */
+        .room-panel-container { padding: 20px 25px; background-color: #fff; text-align: center; border-bottom: 1px solid #ccc; }
+        .room-panel-container h2 { margin-top: 0; margin-bottom: 20px; }
+        #room-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding-bottom: 20px; }
+        .room-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; min-width: 200px; text-align: left; transition: all 0.2s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left-width: 6px; }
+        .room-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .room-card h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #1c1e21; }
+        .room-card p { font-size: 1.5em; font-weight: 600; margin: 0; }
+        .room-card.status-safe { border-left-color: #28a745; }
         .room-card.status-safe p { color: #28a745; }
-
-        .room-card.status-warning {
-            border-left-color: #ffc107;
-            background-color: #fffbeb;
-        }
+        .room-card.status-warning { border-left-color: #ffc107; background-color: #fffbeb; }
         .room-card.status-warning p { color: #c09100; }
-
-        .room-card.status-danger {
-            border-left-color: #dc3545;
-            background-color: #fff0f1;
-            animation: pulse-danger 1.5s infinite;
-        }
+        .room-card.status-danger { border-left-color: #dc3545; background-color: #fff0f1; animation: pulse-danger 1.5s infinite; }
         .room-card.status-danger p { color: #dc3545; }
+        @keyframes pulse-danger { 0% { background-color: #fff0f1; } 50% { background-color: #ffe0e3; } 100% { background-color: #fff0f1; } }
 
-        /* Animação para cartões em perigo */
-        @keyframes pulse-danger {
-            0% { background-color: #fff0f1; }
-            50% { background-color: #ffe0e3; }
-            100% { background-color: #fff0f1; }
+        /* ======================================================= */
+        /* ESTILOS PARA O NOVO SISTEMA DE LOGIN                */
+        /* ======================================================= */
+        #login-container {
+            text-align: center;
+            padding: 50px;
+        }
+        #login-button {
+            font-size: 1.2em;
+            padding: 12px 20px;
+            cursor: pointer;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        #logout-container {
+            text-align: right;
+            padding: 10px 20px;
+            background-color: #e9ecef;
+        }
+        #logout-container span {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        #logout-button {
+            cursor: pointer;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
         }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
-    <h1>Monitoramento de Monóxido de Carbono</h1>
-    <h3 id="current-device-id">Selecione um dispositivo no mapa ou painel</h3>
-    <div class="card-container">
-        <div class="card">
-            <h2>Nível Atual (PPM)</h2>
-            <p class="value" id="current-ppm">--</p>
-        </div>
-        <div class="card">
-            <h2>Status</h2>
-            <p class="value" id="current-status">--</p>
-        </div>
-    </div>
+<div id="login-container">
+    <h1>Bem-vindo ao Monitor de CO</h1>
+    <p>Faça login para ver seus dispositivos.</p>
+    <button id="login-button">Fazer Login com Google</button>
 </div>
 
-<div class="room-panel-container">
-    <h2>Painel de Status dos Dispositivos</h2>
-    <div id="room-panel">
+<div id="content-container" style="display: none;">
+
+    <div id="logout-container">
+        <span id="user-email"></span>
+        <button id="logout-button">Sair</button>
+    </div>
+
+    <div class="dashboard">
+        <h1>Monitoramento de Monóxido de Carbono</h1>
+        <h3 id="current-device-id">Selecione um dispositivo no mapa ou painel</h3>
+        <div class="card-container">
+            <div class="card">
+                <h2>Nível Atual (PPM)</h2>
+                <p class="value" id="current-ppm">--</p>
+            </div>
+            <div class="card">
+                <h2>Status</h2>
+                <p class="value" id="current-status">--</p>
+            </div>
         </div>
+    </div>
+
+    <div class="room-panel-container">
+        <h2>Painel de Status dos Dispositivos</h2>
+        <div id="room-panel">
+            </div>
+    </div>
+
+    <div id="map"></div>
 </div>
-<div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
 <script>
-    // SUA CONFIGURAÇÃO DO FIREBASE (JÁ PREENCHIDA)
+    // ==================================================================
+    //               SUA CONFIGURAÇÃO DO FIREBASE
+    // ==================================================================
     const firebaseConfig = {
       apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s",
       authDomain: "mostra-f2718.firebaseapp.com",
@@ -138,8 +131,20 @@
       appId: "1:581453261928:web:5b92c9aa0cf0cbe4fd5fdd"
     };
 
+    // Inicializa o Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+    const auth = firebase.auth(); // Objeto de Autenticação
+
+    // Referências aos elementos do HTML
+    const loginContainer = document.getElementById('login-container');
+    const contentContainer = document.getElementById('content-container');
+    const logoutButton = document.getElementById('logout-button');
+    const loginButton = document.getElementById('login-button');
+    const userEmailElement = document.getElementById('user-email');
+    const roomPanel = document.getElementById('room-panel');
+
+    // Mapa e variáveis globais do dashboard
     const map = L.map('map').setView([-19.9208, -44.0542], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -147,8 +152,101 @@
     
     const markers = {};
     let activeMarker = null;
+    let devicesRef = null; // Referência para o "ouvinte" do banco de dados
 
-    // Função para atualizar o dashboard (agora também o título)
+    // ==================================================================
+    //               FUNÇÕES DE LOGIN E LOGOUT
+    // ==================================================================
+    
+    // Provedor de Login (Google)
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    // Função para fazer Login
+    loginButton.onclick = () => {
+        auth.signInWithPopup(provider)
+            .catch((error) => { console.error("Erro no login: ", error); });
+    };
+
+    // Função para fazer Logout
+    logoutButton.onclick = () => {
+        auth.signOut();
+    };
+
+    // ==================================================================
+    //        O NOVO "CÉREBRO" DO SITE: OUVINTE DE AUTENTICAÇÃO
+    // ==================================================================
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            // ----- USUÁRIO ESTÁ LOGADO -----
+            console.log("Usuário logado:", user.uid);
+            contentContainer.style.display = 'block'; // Mostra o conteúdo principal
+            loginContainer.style.display = 'none';  // Esconde o botão de login
+            userEmailElement.textContent = `Logado como: ${user.email}`; // Mostra o email do usuário
+
+            // Redesenha o mapa (importante pois ele estava escondido)
+            map.invalidateSize();
+
+            // CRIA A CONEXÃO COM A PASTA PARTICULAR DO USUÁRIO
+            const userUid = user.uid;
+            devicesRef = database.ref('dispositivos_por_usuario/' + userUid);
+            
+            // Inicia o "ouvinte" dos dados desse usuário
+            startDatabaseListener(devicesRef);
+
+        } else {
+            // ----- USUÁRIO ESTÁ DESLOGADO -----
+            console.log("Nenhum usuário logado.");
+            contentContainer.style.display = 'none'; // Esconde o conteúdo principal
+            loginContainer.style.display = 'block'; // Mostra o botão de login
+
+            // Para o "ouvinte" antigo (se existir) para não gastar dados
+            if (devicesRef) {
+                devicesRef.off();
+            }
+            // Limpa a tela
+            clearDashboardAndMap();
+        }
+    });
+
+    // ==================================================================
+    //               FUNÇÕES DO DASHBOARD (O CÓDIGO ANTIGO)
+    // ==================================================================
+    
+    // Esta nova função inicia o "ouvinte" do banco de dados
+    function startDatabaseListener(ref) {
+        ref.on('value', (snapshot) => {
+            clearDashboardAndMap(); // Limpa a tela antes de recarregar
+            const allDevices = snapshot.val();
+            
+            if (!allDevices) { 
+                roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado para este usuário.</p>';
+                return; 
+            }
+
+            const devicesArray = Object.entries(allDevices);
+            devicesArray.sort((a, b) => b[1].ppm - a[1].ppm);
+            
+            for (const [deviceId, deviceData] of devicesArray) {
+                updateMapMarker(deviceId, deviceData); 
+                updateRoomPanel(deviceId, deviceData);
+            }
+        });
+    }
+    
+    // Nova função para limpar tudo
+    function clearDashboardAndMap() {
+        updateDashboard(null);
+        roomPanel.innerHTML = ''; // Limpa o painel
+        for (const markerId in markers) { // Remove marcadores antigos do mapa
+            map.removeLayer(markers[markerId]);
+            delete markers[markerId];
+        }
+        if (activeMarker) {
+            activeMarker = null;
+        }
+    }
+
+    // Função para atualizar o dashboard (igual a antes)
     function updateDashboard(data, deviceId) {
         const ppmElement = document.getElementById('current-ppm');
         const statusElement = document.getElementById('current-status');
@@ -177,57 +275,40 @@
         }
     }
     
-    // Função de destaque (usada por ambos os listeners)
-    // Função de destaque (CORRIGIDA)
+    // Função de destaque (igual a antes)
     function highlightDevice(deviceId, deviceData) {
-        // 1. Remove o destaque do marcador antigo (se existir)
         if (activeMarker) {
-            // Reverte para seu estilo normal que salvamos
             activeMarker.setStyle(activeMarker.styleNormal);
         }
-        
-        // 2. Define o novo marcador como ativo
         activeMarker = markers[deviceId];
-
-        // 3. Calcula o estilo de destaque para o *novo* marcador
         const ppm = deviceData.ppm;
         let color = '#28a745';
         if (ppm >= 100) color = '#dc3545';
         else if (ppm >= 50) color = '#ffc107';
         
-        // --- A CORREÇÃO PRINCIPAL ESTÁ AQUI ---
-        // Adicionamos o 'fillColor: color' que estava faltando
         const styleSelected = { radius: 10, fillOpacity: 1, stroke: true, weight: 3, color: '#fff', fillColor: color };
-
         activeMarker.setStyle(styleSelected);
         
-        // 4. Atualiza o resto da interface
         map.setView([deviceData.lat, deviceData.lng], 17);
         updateDashboard(deviceData, deviceId);
         activeMarker.openPopup();
     }
 
-    // Função para criar/atualizar marcadores no mapa
-    // Função limpa e com a lógica de destaque
+    // Função para criar/atualizar marcadores no mapa (igual a antes)
     function updateMapMarker(id, data) {
         const { lat, lng, ppm } = data;
         let color = '#28a745';
         if (ppm >= 100) color = '#dc3545';
         else if (ppm >= 50) color = '#ffc107';
 
-        // --- CORREÇÃO AQUI ---
-        // Trocamos 'color' por 'fillColor' para ser mais explícito
         const styleNormal = { radius: 8, fillOpacity: 0.8, stroke: false, fillColor: color };
 
         if (!markers[id]) {
             markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map);
         }
         
-        markers[id].setStyle(styleNormal);
-        
-        // Armazena o estilo normal no próprio marcador para uso posterior
+        markers[id].setStyle(styleNormal); 
         markers[id].styleNormal = styleNormal; 
-
         const popupContent = `<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`;
         markers[id].bindPopup(popupContent);
         
@@ -235,66 +316,30 @@
             highlightDevice(id, data);
         });
     }
-
-    // =====================================================================
-    // NOVO LISTENER PRINCIPAL DO FIREBASE (UNIFICADO)
-    // =====================================================================
-   const userUid = firebase.auth().currentUser.uid;
-const devicesRef = database.ref('dispositivos_por_usuario/' + userUid);
+    
+    // Função para criar cartões no painel de status
+    function updateRoomPanel(deviceId, deviceData) {
+        const ppm = deviceData.ppm;
+        const card = document.createElement('div');
+        card.className = 'room-card';
         
-        // Reseta o estado do dashboard e marcadores
-        updateDashboard(null);
-        if (activeMarker) {
-            activeMarker.setStyle({ radius: 8, fillOpacity: 0.8, stroke: false });
-            activeMarker = null;
-        }
-
-        const allDevices = snapshot.val();
+        let statusClass = 'status-safe';
+        if (ppm >= 100) statusClass = 'status-danger';
+        else if (ppm >= 50) statusClass = 'status-warning';
+        card.classList.add(statusClass);
         
-        // Pega a referência do novo painel e limpa ele
-        const roomPanel = document.getElementById('room-panel');
-        roomPanel.innerHTML = ''; // Limpa o painel para recriar os cartões
-
-        if (!allDevices) { 
-            roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado.</p>';
-            return; 
-        }
-
-        // 1. Transforma o objeto de dispositivos em um array
-        const devicesArray = Object.entries(allDevices);
-
-        // 2. Ordena o array para colocar os PPMs mais altos primeiro
-        devicesArray.sort((a, b) => b[1].ppm - a[1].ppm);
+        card.innerHTML = `
+            <h3>${deviceId}</h3>
+            <p>${ppm} PPM</p>
+        `;
         
-        // 3. Loop pelo array ORDENADO para criar os cartões e marcadores
-        for (const [deviceId, deviceData] of devicesArray) {
-            
-            // --- 1. ATUALIZA O MAPA ---
-            updateMapMarker(deviceId, deviceData); 
-            
-            // --- 2. CRIA E ATUALIZA O PAINEL DE QUARTOS ---
-            const ppm = deviceData.ppm;
-            const card = document.createElement('div');
-            card.className = 'room-card';
-            
-            let statusClass = 'status-safe';
-            if (ppm >= 100) statusClass = 'status-danger';
-            else if (ppm >= 50) statusClass = 'status-warning';
-            card.classList.add(statusClass);
-            
-            card.innerHTML = `
-                <h3>${deviceId}</h3>
-                <p>${ppm} PPM</p>
-            `;
-            
-            // Adiciona clique ao cartão do painel
-            card.addEventListener('click', () => {
-                highlightDevice(deviceId, deviceData);
-            });
-            
-            roomPanel.appendChild(card);
-        }
-    });
+        card.addEventListener('click', () => {
+            highlightDevice(deviceId, deviceData);
+        });
+        
+        roomPanel.appendChild(card);
+    }
+
 </script>
 
 </body>
