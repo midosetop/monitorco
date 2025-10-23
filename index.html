@@ -125,7 +125,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script>
     // SUA CONFIGURAÇÃO DO FIREBASE (JÁ PREENCHIDA)
     const firebaseConfig = {
@@ -239,8 +239,8 @@
     // =====================================================================
     // NOVO LISTENER PRINCIPAL DO FIREBASE (UNIFICADO)
     // =====================================================================
-    const devicesRef = database.ref('dispositivos');
-    devicesRef.on('value', (snapshot) => {
+   const userUid = firebase.auth().currentUser.uid;
+const devicesRef = database.ref('dispositivos_por_usuario/' + userUid);
         
         // Reseta o estado do dashboard e marcadores
         updateDashboard(null);
