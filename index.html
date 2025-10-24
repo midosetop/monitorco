@@ -9,7 +9,7 @@
     
     <style>
         /* --- ESTILOS GERAIS --- */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; transition: background-color 0.3s ease, color 0.3s ease; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; transition: background-color 0.3s ease, color 0.3s ease; } /* Added transition */
         #map { height: 60vh; width: 100%; border-bottom: 1px solid #ccc; cursor: pointer; transition: border-color 0.3s ease; }
         .dashboard { padding: 25px; text-align: center; transition: background-color 0.3s ease; }
         .dashboard h1 { margin-top: 0; color: #1c1e21; transition: color 0.3s ease; }
@@ -27,7 +27,7 @@
         .room-panel-container { padding: 20px 25px; background-color: #fff; text-align: center; border-bottom: 1px solid #ccc; transition: background-color 0.3s ease, border-color 0.3s ease; }
         .room-panel-container h2 { margin-top: 0; margin-bottom: 20px; transition: color 0.3s ease; }
         #room-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding-bottom: 20px; }
-        .room-card { position: relative; border: 1px solid #ddd; border-radius: 8px; padding: 15px; min-width: 200px; text-align: left; transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left-width: 6px; }
+        .room-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; min-width: 200px; text-align: left; transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left-width: 6px; }
         .room-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .room-card h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #1c1e21; transition: color 0.3s ease; }
         .room-card p { font-size: 1.5em; font-weight: 600; margin: 0; transition: color 0.3s ease; }
@@ -60,11 +60,7 @@
         #logout-container { text-align: right; padding: 10px 20px; background-color: #e9ecef; transition: background-color 0.3s ease; }
         #logout-container span { margin-right: 15px; font-weight: bold; transition: color 0.3s ease; }
         #logout-button, #theme-toggle-button { cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 5px; padding: 5px 10px; }
-        #theme-toggle-button { margin-right: 10px; background-color: #5a6268; }
-
-        /* --- ESTILO BOTÃO REMOVER --- */
-        .remove-btn { position: absolute; top: 5px; right: 5px; background-color: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; line-height: 18px; text-align: center; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, background-color 0.2s; }
-        .remove-btn:hover { background-color: #c82333; opacity: 1; }
+        #theme-toggle-button { margin-right: 10px; background-color: #5a6268; } /* Estilo ligeiramente diferente para o botão de tema */
 
         /* ============================================= */
         /* ESTILOS DO TEMA ESCURO              */
@@ -90,10 +86,48 @@
         body.dark-theme .login-form input { background-color: #3a3a3a; border-color: #555; color: #e0e0e0; }
         body.dark-theme .login-form input::placeholder { color: #888; }
         body.dark-theme .divider { color: #aaa; }
-        body.dark-theme #logout-container span { color: #e0e0e0; }
-        body.dark-theme .remove-btn { background-color: #a02a33; }
-        body.dark-theme .remove-btn:hover { background-color: #c82333; }
+        body.dark-theme #logout-container span { color: #e0e0e0; } /* Ajuste cor do email no logout dark - CORRIGIDO */
+        /* ... seu CSS existente ... */
 
+/* ============================================= */
+/* ESTILO DO BOTÃO DE REMOVER              */
+/* ============================================= */
+.room-card {
+    position: relative; /* Necessário para posicionar o botão dentro */
+    /* ... outros estilos do room-card ... */
+}
+
+.remove-btn {
+    position: absolute; /* Posicionamento absoluto dentro do card */
+    top: 5px;
+    right: 5px;
+    background-color: #dc3545; /* Cor vermelha de perigo */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Faz o botão redondo */
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 18px; /* Centraliza o 'X' verticalmente */
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.7; /* Começa um pouco transparente */
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.remove-btn:hover {
+    background-color: #c82333; /* Vermelho mais escuro no hover */
+    opacity: 1; /* Fica opaco no hover */
+}
+
+/* Ajuste no tema escuro */
+body.dark-theme .remove-btn {
+    background-color: #a02a33;
+}
+body.dark-theme .remove-btn:hover {
+    background-color: #c82333;
+}
     </style>
 </head>
 <body>
@@ -183,7 +217,7 @@
         // Referências aos elementos do HTML
         const loginContainer = document.getElementById('login-container');
         const contentContainer = document.getElementById('content-container');
-        const logoutButton = document.getElementById('logout-button'); // <<<<<<<<<<<< DECLARADO AQUI
+        const logoutButton = document.getElementById('logout-button');
         const userEmailElement = document.getElementById('user-email');
         const roomPanel = document.getElementById('room-panel');
         const loginEmailInput = document.getElementById('login-email');
@@ -222,31 +256,64 @@
         function handleAuthError(error) { /* ... código ... */ }
 
         // ========================================================== //
-        //          VINCULA O CLIQUE DO BOTÃO SAIR AQUI               //
+        //          VINCULA OS CLIQUES DOS BOTÕES AQUI                //
         // ========================================================== //
+
+        // Botão SAIR
         if (logoutButton) {
             logoutButton.onclick = () => {
                 console.log(">>> Botão Sair clicado! Chamando auth.signOut()...");
                 auth.signOut();
             };
-        } else {
-            console.error("ERRO: Botão Sair (logoutButton) não encontrado!");
-        }
+        } else { console.error("ERRO: Botão Sair (logoutButton) não encontrado!"); }
+
+        // Botão LOGIN COM GOOGLE (POPUP)
+        if (googleLoginButton) {
+             console.log(">>> Vinculando clique (POPUP) ao botão Google.");
+             googleLoginButton.onclick = () => {
+                 console.log(">>> Botão Google clicado! Chamando signInWithPopup...");
+                 auth.signInWithPopup(provider)
+                     .then((result) => { console.log(">>> Login via Popup bem-sucedido:", result.user.email); })
+                     .catch((error) => { console.error(">>> Erro no signInWithPopup:", error); handleAuthError(error); });
+             };
+         } else { console.error(">>> ERRO CRÍTICO: Botão Google não encontrado!"); }
+
+        // Botão LOGIN COM E-MAIL
+        if (loginEmailButton) {
+            loginEmailButton.onclick = () => {
+                const email = loginEmailInput.value; const password = loginPasswordInput.value;
+                if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
+                auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
+            };
+        } else { console.error("ERRO: Botão Login Email não encontrado!"); }
+
+        // Botão CRIAR CONTA COM E-MAIL
+        if (registerEmailButton) {
+            registerEmailButton.onclick = () => {
+                const email = loginEmailInput.value; const password = loginPasswordInput.value;
+                if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(cred => console.log("Conta criada:", cred.user))
+                    .catch(handleAuthError);
+            };
+        } else { console.error("ERRO: Botão Registrar Email não encontrado!"); }
         // ========================================================== //
 
 
-        // --- LÓGICA DE AUTENTICAÇÃO ---
+        // --- LÓGICA DE AUTENTICAÇÃO (onAuthStateChanged) ---
         auth.onAuthStateChanged((user) => {
             console.log(">>> PASSO A: onAuthStateChanged disparado. User:", user ? user.uid : "null");
 
             if (user) {
                 // ----- USUÁRIO LOGADO -----
                 console.log(">>> PASSO B: Usuário logado detectado.");
-                // ... (código para mostrar conteúdo) ...
-                if (!devicesRef) { // Só inicia o listener se não estiver ativo
+                if(contentContainer) contentContainer.style.display = 'block';
+                if(loginContainer) loginContainer.style.display = 'none';
+                // ... (resto do código para mostrar conteúdo e buscar dados)
+                if (!devicesRef) { // Só inicia se não estiver ativo
                     const userUid = user.uid;
                     const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
-                    console.log(">>> PASSO C: Preparando para ouvir o caminho:", userDevicesPath);
+                    console.log(">>> PASSO C: Preparando para ouvir:", userDevicesPath);
                     devicesRef = database.ref(userDevicesPath);
                     startDatabaseListener(devicesRef);
                 }
@@ -254,17 +321,13 @@
             } else {
                 // ----- USUÁRIO DESLOGADO -----
                 console.log(">>> Usuário deslogado.");
-                 // ... (código para mostrar login) ...
+                if(contentContainer) contentContainer.style.display = 'none';
+                if(loginContainer) loginContainer.style.display = 'block';
+                // REMOVIDO: A vinculação dos cliques dos botões de login foi movida para fora.
 
-                // Vincula cliques dos botões de LOGIN (Google, E-mail, Registro)
-                if (googleLoginButton) { googleLoginButton.onclick = () => { /* ... (signInWithPopup) ... */ }; }
-                if (loginEmailButton) { loginEmailButton.onclick = () => { /* ... (signInWithEmail) ... */ }; }
-                if (registerEmailButton) { registerEmailButton.onclick = () => { /* ... (createUser) ... */ }; }
-                // O logoutButton.onclick NÃO fica aqui
-
-                // ... (código para limpar tela e remover listener DB) ...
-                if (devicesRef) { devicesRef.off(); devicesRef = null; console.log(">>> Ouvinte DB removido."); } // Zera a ref
-                // ...
+                if (devicesRef) { devicesRef.off(); devicesRef = null; console.log(">>> Ouvinte DB removido."); }
+                clearDashboardAndMap();
+                if (currentMapLayer && map) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
             }
         });
 
