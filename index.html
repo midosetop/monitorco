@@ -4,7 +4,7 @@
     <title>Painel de Controle - Detector de CO</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/jpeg" href="favicon.jpeg"> <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="icon" type="image/png" href="favicon.png"> <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; }
@@ -38,14 +38,50 @@
         @keyframes pulse-danger { 0% { background-color: #fff0f1; } 50% { background-color: #ffe0e3; } 100% { background-color: #fff0f1; } }
 
         /* ======================================================= */
-        /* ESTILOS PARA O NOVO SISTEMA DE LOGIN                */
+        /* ESTILOS ATUALIZADOS PARA O LOGIN                 */
         /* ======================================================= */
         #login-container {
             text-align: center;
-            padding: 50px;
+            padding: 40px 20px;
+            max-width: 400px;
+            margin: 50px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        #login-button {
-            font-size: 1.2em;
+        #login-container h1 { margin-top: 0; }
+        .login-form input {
+            width: 90%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .login-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .login-buttons button {
+            padding: 10px 15px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        #login-button-email { background-color: #007bff; color: white; }
+        #register-button-email { background-color: #6c757d; color: white; }
+        
+        .divider {
+            margin: 20px 0;
+            font-weight: bold;
+            color: #888;
+        }
+
+        #google-login-button {
+            font-size: 1.1em;
             padding: 12px 20px;
             cursor: pointer;
             background-color: #4285F4;
@@ -53,32 +89,38 @@
             border: none;
             border-radius: 5px;
             font-weight: bold;
+            width: 90%;
         }
-        #logout-container {
-            text-align: right;
-            padding: 10px 20px;
-            background-color: #e9ecef;
-        }
-        #logout-container span {
-            margin-right: 15px;
+        #login-error-message {
+            color: #dc3545;
             font-weight: bold;
+            height: 20px;
         }
-        #logout-button {
-            cursor: pointer;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 5px 10px;
-        }
+
+        /* --- Estilos do Logout --- */
+        #logout-container { text-align: right; padding: 10px 20px; background-color: #e9ecef; }
+        #logout-container span { margin-right: 15px; font-weight: bold; }
+        #logout-button { cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 5px; padding: 5px 10px; }
     </style>
 </head>
 <body>
 
 <div id="login-container">
-    <h1>Bem-vindo ao Monitor de CO</h1>
-    <p>Faça login para ver seus dispositivos.</p>
-    <button id="login-button">Fazer Login com Google</button>
+    <h1>Bem-vindo!</h1>
+    <p>Faça login ou crie sua conta para continuar.</p>
+    
+    <div class="login-form">
+        <input type="email" id="login-email" placeholder="Seu e-mail" required>
+        <input type="password" id="login-password" placeholder="Sua senha" required>
+        <p id="login-error-message"></p> <div class="login-buttons">
+            <button id="login-button-email">Entrar</button>
+            <button id="register-button-email">Criar Conta</button>
+        </div>
+    </div>
+    
+    <div class="divider">OU</div>
+    
+    <button id="google-login-button">Entrar com Google</button>
 </div>
 
 <div id="content-container" style="display: none;">
@@ -140,9 +182,16 @@
     const loginContainer = document.getElementById('login-container');
     const contentContainer = document.getElementById('content-container');
     const logoutButton = document.getElementById('logout-button');
-    const loginButton = document.getElementById('login-button');
     const userEmailElement = document.getElementById('user-email');
     const roomPanel = document.getElementById('room-panel');
+
+    // --- NOVOS ELEMENTOS DE LOGIN ---
+    const loginEmailInput = document.getElementById('login-email');
+    const loginPasswordInput = document.getElementById('login-password');
+    const loginEmailButton = document.getElementById('login-button-email');
+    const registerEmailButton = document.getElementById('register-button-email');
+    const googleLoginButton = document.getElementById('google-login-button');
+    const loginErrorMessage = document.getElementById('login-error-message');
 
     // Mapa e variáveis globais do dashboard
     const map = L.map('map').setView([-19.9208, -44.0542], 13);
@@ -152,19 +201,50 @@
     
     const markers = {};
     let activeMarker = null;
-    let devicesRef = null; // Referência para o "ouvinte" do banco de dados
+    let devicesRef = null;
 
     // ==================================================================
-    //               FUNÇÕES DE LOGIN E LOGOUT
+    //               FUNÇÕES DE LOGIN E LOGOUT ATUALIZADAS
     // ==================================================================
     
     // Provedor de Login (Google)
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    // Função para fazer Login
-    loginButton.onclick = () => {
+    // Função para fazer Login com Google
+    googleLoginButton.onclick = () => {
         auth.signInWithPopup(provider)
-            .catch((error) => { console.error("Erro no login: ", error); });
+            .catch((error) => { handleAuthError(error); });
+    };
+
+    // --- NOVAS FUNÇÕES DE LOGIN/REGISTRO POR E-MAIL ---
+    
+    // Função para fazer Login com E-mail/Senha
+    loginEmailButton.onclick = () => {
+        const email = loginEmailInput.value;
+        const password = loginPasswordInput.value;
+        if (!email || !password) {
+            loginErrorMessage.textContent = "Por favor, preencha o e-mail e a senha.";
+            return;
+        }
+        auth.signInWithEmailAndPassword(email, password)
+            .catch((error) => { handleAuthError(error); });
+    };
+
+    // Função para Criar Conta com E-mail/Senha
+    registerEmailButton.onclick = () => {
+        const email = loginEmailInput.value;
+        const password = loginPasswordInput.value;
+        if (!email || !password) {
+            loginErrorMessage.textContent = "Por favor, preencha o e-mail e a senha.";
+            return;
+        }
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                // Sucesso! O usuário é criado e o onAuthStateChanged
+                // será chamado automaticamente, fazendo o login.
+                console.log("Conta criada com sucesso:", userCredential.user);
+            })
+            .catch((error) => { handleAuthError(error); });
     };
 
     // Função para fazer Logout
@@ -172,54 +252,73 @@
         auth.signOut();
     };
 
+    // --- NOVA FUNÇÃO PARA LIDAR COM ERROS DE LOGIN ---
+    function handleAuthError(error) {
+        let message = "";
+        console.warn("Erro de Autenticação:", error.code);
+        switch (error.code) {
+            case "auth/wrong-password":
+                message = "Senha incorreta. Tente novamente.";
+                break;
+            case "auth/user-not-found":
+                message = "Nenhum usuário encontrado com este e-mail.";
+                break;
+            case "auth/email-already-in-use":
+                message = "Este e-mail já está em uso. Tente fazer login.";
+                break;
+            case "auth/weak-password":
+                message = "A senha precisa ter pelo menos 6 caracteres.";
+                break;
+            case "auth/invalid-email":
+                message = "O formato do e-mail é inválido.";
+                break;
+            default:
+                message = "Ocorreu um erro. Tente novamente.";
+        }
+        loginErrorMessage.textContent = message;
+    }
+
     // ==================================================================
-    //        O NOVO "CÉREBRO" DO SITE: OUVINTE DE AUTENTICAÇÃO
+    //        O "CÉREBRO" DO SITE (NÃO MUDA)
     // ==================================================================
     auth.onAuthStateChanged((user) => {
         if (user) {
             // ----- USUÁRIO ESTÁ LOGADO -----
-            console.log("Usuário logado:", user.uid);
-            contentContainer.style.display = 'block'; // Mostra o conteúdo principal
-            loginContainer.style.display = 'none';  // Esconde o botão de login
-            userEmailElement.textContent = `Logado como: ${user.email}`; // Mostra o email do usuário
+            contentContainer.style.display = 'block';
+            loginContainer.style.display = 'none';
+            userEmailElement.textContent = `Logado como: ${user.email}`;
+            loginErrorMessage.textContent = ""; // Limpa erros antigos
 
-            // Redesenha o mapa (importante pois ele estava escondido)
             map.invalidateSize();
 
-            // CRIA A CONEXÃO COM A PASTA PARTICULAR DO USUÁRIO
             const userUid = user.uid;
             devicesRef = database.ref('dispositivos_por_usuario/' + userUid);
             
-            // Inicia o "ouvinte" dos dados desse usuário
             startDatabaseListener(devicesRef);
 
         } else {
             // ----- USUÁRIO ESTÁ DESLOGADO -----
-            console.log("Nenhum usuário logado.");
-            contentContainer.style.display = 'none'; // Esconde o conteúdo principal
-            loginContainer.style.display = 'block'; // Mostra o botão de login
+            contentContainer.style.display = 'none';
+            loginContainer.style.display = 'block';
 
-            // Para o "ouvinte" antigo (se existir) para não gastar dados
             if (devicesRef) {
                 devicesRef.off();
             }
-            // Limpa a tela
             clearDashboardAndMap();
         }
     });
 
     // ==================================================================
-    //               FUNÇÕES DO DASHBOARD (O CÓDIGO ANTIGO)
+    //               FUNÇÕES DO DASHBOARD (NÃO MUDAM)
     // ==================================================================
     
-    // Esta nova função inicia o "ouvinte" do banco de dados
     function startDatabaseListener(ref) {
         ref.on('value', (snapshot) => {
-            clearDashboardAndMap(); // Limpa a tela antes de recarregar
+            clearDashboardAndMap();
             const allDevices = snapshot.val();
             
             if (!allDevices) { 
-                roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado para este usuário.</p>';
+                roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
                 return; 
             }
 
@@ -233,11 +332,10 @@
         });
     }
     
-    // Nova função para limpar tudo
     function clearDashboardAndMap() {
         updateDashboard(null);
-        roomPanel.innerHTML = ''; // Limpa o painel
-        for (const markerId in markers) { // Remove marcadores antigos do mapa
+        roomPanel.innerHTML = '';
+        for (const markerId in markers) {
             map.removeLayer(markers[markerId]);
             delete markers[markerId];
         }
@@ -246,7 +344,6 @@
         }
     }
 
-    // Função para atualizar o dashboard (igual a antes)
     function updateDashboard(data, deviceId) {
         const ppmElement = document.getElementById('current-ppm');
         const statusElement = document.getElementById('current-status');
@@ -275,7 +372,6 @@
         }
     }
     
-    // Função de destaque (igual a antes)
     function highlightDevice(deviceId, deviceData) {
         if (activeMarker) {
             activeMarker.setStyle(activeMarker.styleNormal);
@@ -294,7 +390,6 @@
         activeMarker.openPopup();
     }
 
-    // Função para criar/atualizar marcadores no mapa (igual a antes)
     function updateMapMarker(id, data) {
         const { lat, lng, ppm } = data;
         let color = '#28a745';
@@ -317,7 +412,6 @@
         });
     }
     
-    // Função para criar cartões no painel de status
     function updateRoomPanel(deviceId, deviceData) {
         const ppm = deviceData.ppm;
         const card = document.createElement('div');
