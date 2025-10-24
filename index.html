@@ -4,31 +4,33 @@
     <title>Painel de Controle - Detector de CO</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/jpeg" href="favicon.jpeg"> <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="icon" type="image/jpeg" href="favicon.jpeg">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; }
-        #map { height: 60vh; width: 100%; border-bottom: 1px solid #ccc; cursor: pointer; }
-        .dashboard { padding: 25px; text-align: center; }
-        .dashboard h1 { margin-top: 0; color: #1c1e21; }
+        /* --- ESTILOS GERAIS --- */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; transition: background-color 0.3s ease, color 0.3s ease; } /* Added transition */
+        #map { height: 60vh; width: 100%; border-bottom: 1px solid #ccc; cursor: pointer; transition: border-color 0.3s ease; }
+        .dashboard { padding: 25px; text-align: center; transition: background-color 0.3s ease; }
+        .dashboard h1 { margin-top: 0; color: #1c1e21; transition: color 0.3s ease; }
         .card-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
-        .card { background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px 30px; min-width: 220px; transition: transform 0.2s; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px 30px; min-width: 220px; transition: transform 0.2s, background-color 0.3s ease, box-shadow 0.3s ease; }
         .card:hover { transform: translateY(-5px); }
-        .card h2 { margin-top: 0; font-size: 1.2em; color: #606770; }
+        .card h2 { margin-top: 0; font-size: 1.2em; color: #606770; transition: color 0.3s ease; }
         .card .value { font-size: 3em; font-weight: 700; line-height: 1.2; }
-        #current-device-id { color: #555; font-weight: bold; height: 20px; margin-top: 15px; }
+        #current-device-id { color: #555; font-weight: bold; height: 20px; margin-top: 15px; transition: color 0.3s ease; }
         .status-safe { color: #28a745; }
         .status-warning { color: #ffc107; }
         .status-danger { color: #dc3545; }
 
-        /* Estilos do Painel de Status */
-        .room-panel-container { padding: 20px 25px; background-color: #fff; text-align: center; border-bottom: 1px solid #ccc; }
-        .room-panel-container h2 { margin-top: 0; margin-bottom: 20px; }
+        /* --- ESTILOS PAINEL DE STATUS --- */
+        .room-panel-container { padding: 20px 25px; background-color: #fff; text-align: center; border-bottom: 1px solid #ccc; transition: background-color 0.3s ease, border-color 0.3s ease; }
+        .room-panel-container h2 { margin-top: 0; margin-bottom: 20px; transition: color 0.3s ease; }
         #room-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding-bottom: 20px; }
-        .room-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; min-width: 200px; text-align: left; transition: all 0.2s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left-width: 6px; }
+        .room-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; min-width: 200px; text-align: left; transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left-width: 6px; }
         .room-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .room-card h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #1c1e21; }
-        .room-card p { font-size: 1.5em; font-weight: 600; margin: 0; }
+        .room-card h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #1c1e21; transition: color 0.3s ease; }
+        .room-card p { font-size: 1.5em; font-weight: 600; margin: 0; transition: color 0.3s ease; }
         .room-card.status-safe { border-left-color: #28a745; }
         .room-card.status-safe p { color: #28a745; }
         .room-card.status-warning { border-left-color: #ffc107; background-color: #fffbeb; }
@@ -37,92 +39,55 @@
         .room-card.status-danger p { color: #dc3545; }
         @keyframes pulse-danger { 0% { background-color: #fff0f1; } 50% { background-color: #ffe0e3; } 100% { background-color: #fff0f1; } }
 
-       
-
-/* ================================================== */
-/* COLE ESTE NOVO CSS AQUI                  */
-/* ================================================== */
-#user-info-card {
-    text-align: left;
-}
-#user-info-card p {
-    font-size: 0.9em;
-    line-height: 1.4;
-}
-#user-uid-display {
-    background-color: #fff;
-    border: 1px solid #ccc;
-    padding: 5px 8px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-size: 1.1em;
-    color: #c7254e;
-    word-wrap: break-word; /* Para quebrar o ID se a tela for pequena */
-}
-        /* ======================================================= */
-        /* ESTILOS ATUALIZADOS PARA O LOGIN                 */
-        /* ======================================================= */
-        #login-container {
-            text-align: center;
-            padding: 40px 20px;
-            max-width: 400px;
-            margin: 50px auto;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        #login-container h1 { margin-top: 0; }
-        .login-form input {
-            width: 90%;
-            padding: 12px 15px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 1em;
-        }
-        .login-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        .login-buttons button {
-            padding: 10px 15px;
-            font-size: 1em;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-        }
+        /* --- ESTILOS CARD ID USUÁRIO --- */
+        #user-info-card { text-align: left; }
+        #user-info-card p { font-size: 0.9em; line-height: 1.4; transition: color 0.3s ease; }
+        #user-uid-display { background-color: #fff; border: 1px solid #ccc; padding: 5px 8px; border-radius: 4px; font-family: monospace; font-size: 1.1em; color: #c7254e; word-wrap: break-word; transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
+        
+        /* --- ESTILOS LOGIN --- */
+        #login-container { text-align: center; padding: 40px 20px; max-width: 400px; margin: 50px auto; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: background-color 0.3s ease, box-shadow 0.3s ease; }
+        #login-container h1 { margin-top: 0; transition: color 0.3s ease; }
+        .login-form input { width: 90%; padding: 12px 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
+        .login-buttons { display: flex; gap: 10px; justify-content: center; }
+        .login-buttons button { padding: 10px 15px; font-size: 1em; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
         #login-button-email { background-color: #007bff; color: white; }
         #register-button-email { background-color: #6c757d; color: white; }
-        
-        .divider {
-            margin: 20px 0;
-            font-weight: bold;
-            color: #888;
-        }
+        .divider { margin: 20px 0; font-weight: bold; color: #888; transition: color 0.3s ease; }
+        #google-login-button { font-size: 1.1em; padding: 12px 20px; cursor: pointer; background-color: #4285F4; color: white; border: none; border-radius: 5px; font-weight: bold; width: 90%; }
+        #login-error-message { color: #dc3545; font-weight: bold; height: 20px; }
 
-        #google-login-button {
-            font-size: 1.1em;
-            padding: 12px 20px;
-            cursor: pointer;
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-            width: 90%;
-        }
-        #login-error-message {
-            color: #dc3545;
-            font-weight: bold;
-            height: 20px;
-        }
+        /* --- ESTILOS LOGOUT & TEMA --- */
+        #logout-container { text-align: right; padding: 10px 20px; background-color: #e9ecef; transition: background-color 0.3s ease; }
+        #logout-container span { margin-right: 15px; font-weight: bold; transition: color 0.3s ease; }
+        #logout-button, #theme-toggle-button { cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 5px; padding: 5px 10px; }
+        #theme-toggle-button { margin-right: 10px; background-color: #5a6268; } /* Estilo ligeiramente diferente para o botão de tema */
 
-        /* --- Estilos do Logout --- */
-        #logout-container { text-align: right; padding: 10px 20px; background-color: #e9ecef; }
-        #logout-container span { margin-right: 15px; font-weight: bold; }
-        #logout-button { cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 5px; padding: 5px 10px; }
+        /* ============================================= */
+        /* ESTILOS DO TEMA ESCURO              */
+        /* ============================================= */
+
+        body.dark-theme { background-color: #121212; color: #e0e0e0; }
+        body.dark-theme #map { border-bottom-color: #333; }
+        body.dark-theme .dashboard, body.dark-theme .room-panel-container, body.dark-theme #logout-container { background-color: #1e1e1e; border-bottom-color: #333; }
+        body.dark-theme h1, body.dark-theme h2, body.dark-theme h3 { color: #ffffff; }
+        body.dark-theme #current-device-id { color: #bbbbbb; }
+        body.dark-theme .card { background-color: #2c2c2c; box-shadow: 0 4px 8px rgba(0,0,0,0.4); border-color: #444; }
+        body.dark-theme .card h2 { color: #cccccc; }
+        body.dark-theme #user-info-card { background-color: #3a3a3a; border-color: #555; }
+        body.dark-theme #user-info-card p { color: #d0d0d0; }
+        body.dark-theme #user-uid-display { background-color: #222; border-color: #555; color: #ff8a8a; }
+        body.dark-theme .room-card { background-color: #2c2c2c; border-color: #444; }
+        body.dark-theme .room-card h3 { color: #ffffff; }
+        body.dark-theme .room-card.status-warning { background-color: #4d3a00; border-left-color: #ffc107; }
+        body.dark-theme .room-card.status-warning p { color: #ffeb9b; }
+        body.dark-theme .room-card.status-danger { background-color: #5c1a1f; border-left-color: #dc3545; animation: none; }
+        body.dark-theme .room-card.status-danger p { color: #ffacb1; }
+        body.dark-theme #login-container { background-color: #1e1e1e; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        body.dark-theme .login-form input { background-color: #3a3a3a; border-color: #555; color: #e0e0e0; }
+        body.dark-theme .login-form input::placeholder { color: #888; }
+        body.dark-theme .divider { color: #aaa; }
+        body.dark-theme #logout-container span { color: #212529; } /* Ajuste cor do email no logout dark */
+
     </style>
 </head>
 <body>
@@ -130,50 +95,45 @@
 <div id="login-container">
     <h1>Bem-vindo!</h1>
     <p>Faça login ou crie sua conta para continuar.</p>
-    
     <div class="login-form">
         <input type="email" id="login-email" placeholder="Seu e-mail" required>
         <input type="password" id="login-password" placeholder="Sua senha" required>
-        <p id="login-error-message"></p> <div class="login-buttons">
+        <p id="login-error-message"></p>
+        <div class="login-buttons">
             <button id="login-button-email">Entrar</button>
             <button id="register-button-email">Criar Conta</button>
         </div>
     </div>
-    
     <div class="divider">OU</div>
-    
     <button id="google-login-button">Entrar com Google</button>
 </div>
 
 <div id="content-container" style="display: none;">
-
     <div id="logout-container">
         <span id="user-email"></span>
+        <button id="theme-toggle-button" style="margin-right: 10px;">🌓</button> 
         <button id="logout-button">Sair</button>
     </div>
 
     <div class="dashboard">
-    <h1>Monitoramento de Monóxido de Carbono</h1>
-    <h3 id="current-device-id">Selecione um dispositivo no mapa ou painel</h3>
-    <div class="card-container">
-        
-        <div class="card">
-            <h2>Nível Atual (PPM)</h2>
-            <p class="value" id="current-ppm">--</p>
+        <h1>Monitoramento de Monóxido de Carbono</h1>
+        <h3 id="current-device-id">Selecione um dispositivo no mapa ou painel</h3>
+        <div class="card-container">
+            <div class="card">
+                <h2>Nível Atual (PPM)</h2>
+                <p class="value" id="current-ppm">--</p>
+            </div>
+            <div class="card">
+                <h2>Status</h2>
+                <p class="value" id="current-status">--</p>
+            </div>
+            <div class="card" id="user-info-card">
+                <h2>Seu ID de Usuário</h2>
+                <p>Para adicionar um novo dispositivo, use este ID no portal de configuração:</p>
+                <code id="user-uid-display">Carregando...</code>
+            </div>
         </div>
-        
-        <div class="card">
-            <h2>Status</h2>
-            <p class="value" id="current-status">--</p>
-        </div>
-
-        <div class="card" id="user-info-card">
-            <h2>Seu ID de Usuário</h2>
-            <p>Para adicionar um novo dispositivo, use este ID no portal de configuração:</p>
-            <code id="user-uid-display">Carregando...</code>
-        </div>
-        </div>
-</div>
+    </div>
 
     <div class="room-panel-container">
         <h2>Painel de Status dos Dispositivos</h2>
@@ -190,9 +150,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
 <script>
-    // ==================================================================
-    //               SUA CONFIGURAÇÃO DO FIREBASE
-    // ==================================================================
+    // Configuração do Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s",
       authDomain: "mostra-f2718.firebaseapp.com",
@@ -206,7 +164,38 @@
     // Inicializa o Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    const auth = firebase.auth(); // Objeto de Autenticação
+    const auth = firebase.auth();
+
+    // ============================================= //
+    //          CÓDIGO DO TEMA (LIGHT/DARK)          //
+    // ============================================= //
+    const themeToggleButton = document.getElementById('theme-toggle-button');
+    const bodyElement = document.body;
+
+    // Verifica tema salvo no localStorage
+    const currentTheme = localStorage.getItem('theme');
+    if (currentTheme === 'dark') {
+        bodyElement.classList.add('dark-theme');
+        if(themeToggleButton) themeToggleButton.textContent = '☀️'; 
+    } else {
+         if(themeToggleButton) themeToggleButton.textContent = '🌓'; 
+    }
+
+    // Evento de clique no botão de tema
+    if (themeToggleButton) {
+        themeToggleButton.onclick = () => {
+            bodyElement.classList.toggle('dark-theme');
+            let theme = 'light';
+            if (bodyElement.classList.contains('dark-theme')) {
+                theme = 'dark';
+                themeToggleButton.textContent = '☀️'; 
+            } else {
+                themeToggleButton.textContent = '🌓'; 
+            }
+            localStorage.setItem('theme', theme);
+        };
+    }
+    // ============================================= //
 
     // Referências aos elementos do HTML
     const loginContainer = document.getElementById('login-container');
@@ -214,8 +203,6 @@
     const logoutButton = document.getElementById('logout-button');
     const userEmailElement = document.getElementById('user-email');
     const roomPanel = document.getElementById('room-panel');
-
-    // --- NOVOS ELEMENTOS DE LOGIN ---
     const loginEmailInput = document.getElementById('login-email');
     const loginPasswordInput = document.getElementById('login-password');
     const loginEmailButton = document.getElementById('login-button-email');
@@ -223,248 +210,126 @@
     const googleLoginButton = document.getElementById('google-login-button');
     const loginErrorMessage = document.getElementById('login-error-message');
 
-    // Mapa e variáveis globais do dashboard
+    // Mapa e variáveis globais
     const map = L.map('map').setView([-19.9208, -44.0542], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
-    
     const markers = {};
     let activeMarker = null;
     let devicesRef = null;
 
-    // ==================================================================
-    //               FUNÇÕES DE LOGIN E LOGOUT ATUALIZADAS
-    // ==================================================================
-    
-    // Provedor de Login (Google)
+    // Funções de Login/Logout/Erro (sem alterações)
     const provider = new firebase.auth.GoogleAuthProvider();
-
-    // Função para fazer Login com Google
-    googleLoginButton.onclick = () => {
-        auth.signInWithPopup(provider)
-            .catch((error) => { handleAuthError(error); });
-    };
-
-    // --- NOVAS FUNÇÕES DE LOGIN/REGISTRO POR E-MAIL ---
-    
-    // Função para fazer Login com E-mail/Senha
+    googleLoginButton.onclick = () => { auth.signInWithPopup(provider).catch(handleAuthError); };
     loginEmailButton.onclick = () => {
-        const email = loginEmailInput.value;
-        const password = loginPasswordInput.value;
-        if (!email || !password) {
-            loginErrorMessage.textContent = "Por favor, preencha o e-mail e a senha.";
-            return;
-        }
-        auth.signInWithEmailAndPassword(email, password)
-            .catch((error) => { handleAuthError(error); });
+        const email = loginEmailInput.value; const password = loginPasswordInput.value;
+        if (!email || !password) { loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
+        auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
     };
-
-    // Função para Criar Conta com E-mail/Senha
     registerEmailButton.onclick = () => {
-        const email = loginEmailInput.value;
-        const password = loginPasswordInput.value;
-        if (!email || !password) {
-            loginErrorMessage.textContent = "Por favor, preencha o e-mail e a senha.";
-            return;
-        }
+        const email = loginEmailInput.value; const password = loginPasswordInput.value;
+        if (!email || !password) { loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
         auth.createUserWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                // Sucesso! O usuário é criado e o onAuthStateChanged
-                // será chamado automaticamente, fazendo o login.
-                console.log("Conta criada com sucesso:", userCredential.user);
-            })
-            .catch((error) => { handleAuthError(error); });
+            .then(cred => console.log("Conta criada:", cred.user))
+            .catch(handleAuthError);
     };
-
-    // Função para fazer Logout
-    logoutButton.onclick = () => {
-        auth.signOut();
-    };
-
-    // --- NOVA FUNÇÃO PARA LIDAR COM ERROS DE LOGIN ---
+    logoutButton.onclick = () => { auth.signOut(); };
     function handleAuthError(error) {
-        let message = "";
-        console.warn("Erro de Autenticação:", error.code);
+        let message = ""; console.warn("Erro Auth:", error.code);
         switch (error.code) {
-            case "auth/wrong-password":
-                message = "Senha incorreta. Tente novamente.";
-                break;
-            case "auth/user-not-found":
-                message = "Nenhum usuário encontrado com este e-mail.";
-                break;
-            case "auth/email-already-in-use":
-                message = "Este e-mail já está em uso. Tente fazer login.";
-                break;
-            case "auth/weak-password":
-                message = "A senha precisa ter pelo menos 6 caracteres.";
-                break;
-            case "auth/invalid-email":
-                message = "O formato do e-mail é inválido.";
-                break;
-            default:
-                message = "Ocorreu um erro. Tente novamente.";
+            case "auth/wrong-password": message = "Senha incorreta."; break;
+            case "auth/user-not-found": message = "Usuário não encontrado."; break;
+            case "auth/email-already-in-use": message = "E-mail já em uso."; break;
+            case "auth/weak-password": message = "Senha fraca (mín. 6 caracteres)."; break;
+            case "auth/invalid-email": message = "E-mail inválido."; break;
+            default: message = "Erro. Tente novamente.";
         }
         loginErrorMessage.textContent = message;
     }
 
-    // ==================================================================
-    //        O "CÉREBRO" DO SITE (NÃO MUDA)
-    // ==================================================================
+    // Ouvinte de Autenticação (sem alterações significativas)
     auth.onAuthStateChanged((user) => {
         if (user) {
-            // ----- USUÁRIO ESTÁ LOGADO -----
             contentContainer.style.display = 'block';
             loginContainer.style.display = 'none';
             userEmailElement.textContent = `Logado como: ${user.email}`;
-            loginErrorMessage.textContent = ""; // Limpa erros antigos
+            loginErrorMessage.textContent = "";
             document.getElementById('user-uid-display').textContent = user.uid;
-
             map.invalidateSize();
-
             const userUid = user.uid;
             devicesRef = database.ref('dispositivos_por_usuario/' + userUid);
-            
             startDatabaseListener(devicesRef);
-
         } else {
-            // ----- USUÁRIO ESTÁ DESLOGADO -----
             contentContainer.style.display = 'none';
             loginContainer.style.display = 'block';
-
-            if (devicesRef) {
-                devicesRef.off();
-            }
+            if (devicesRef) { devicesRef.off(); }
             clearDashboardAndMap();
         }
     });
 
-    // ==================================================================
-    //               FUNÇÕES DO DASHBOARD (NÃO MUDAM)
-    // ==================================================================
-    
+    // Funções do Dashboard (sem alterações)
     function startDatabaseListener(ref) {
         ref.on('value', (snapshot) => {
             clearDashboardAndMap();
             const allDevices = snapshot.val();
-            
-            if (!allDevices) { 
-                roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
-                return; 
-            }
-
+            if (!allDevices) { roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>'; return; }
             const devicesArray = Object.entries(allDevices);
             devicesArray.sort((a, b) => b[1].ppm - a[1].ppm);
-            
             for (const [deviceId, deviceData] of devicesArray) {
                 updateMapMarker(deviceId, deviceData); 
                 updateRoomPanel(deviceId, deviceData);
             }
         });
     }
-    
     function clearDashboardAndMap() {
-        updateDashboard(null);
-        roomPanel.innerHTML = '';
-        for (const markerId in markers) {
-            map.removeLayer(markers[markerId]);
-            delete markers[markerId];
-        }
-        if (activeMarker) {
-            activeMarker = null;
-        }
+        updateDashboard(null); roomPanel.innerHTML = '';
+        for (const markerId in markers) { map.removeLayer(markers[markerId]); delete markers[markerId]; }
+        if (activeMarker) { activeMarker = null; }
     }
-
     function updateDashboard(data, deviceId) {
         const ppmElement = document.getElementById('current-ppm');
         const statusElement = document.getElementById('current-status');
         const deviceIdElement = document.getElementById('current-device-id');
-
         if (!data) {
-            ppmElement.textContent = "--";
-            statusElement.textContent = "--";
-            deviceIdElement.textContent = "Selecione um dispositivo no mapa ou painel";
-            return;
+            ppmElement.textContent = "--"; statusElement.textContent = "--";
+            deviceIdElement.textContent = "Selecione um dispositivo no mapa ou painel"; return;
         }
-
         deviceIdElement.textContent = `Mostrando dados do: ${deviceId}`;
-        const ppm = data.ppm;
-        ppmElement.textContent = ppm;
-        statusElement.className = "value";
-        if (ppm < 50) {
-            statusElement.textContent = "Seguro";
-            statusElement.classList.add('status-safe');
-        } else if (ppm < 100) {
-            statusElement.textContent = "Atenção";
-            statusElement.classList.add('status-warning');
-        } else {
-            statusElement.textContent = "Perigo";
-            statusElement.classList.add('status-danger');
-        }
+        const ppm = data.ppm; ppmElement.textContent = ppm; statusElement.className = "value";
+        if (ppm < 50) { statusElement.textContent = "Seguro"; statusElement.classList.add('status-safe'); }
+        else if (ppm < 100) { statusElement.textContent = "Atenção"; statusElement.classList.add('status-warning'); }
+        else { statusElement.textContent = "Perigo"; statusElement.classList.add('status-danger'); }
     }
-    
     function highlightDevice(deviceId, deviceData) {
-        if (activeMarker) {
-            activeMarker.setStyle(activeMarker.styleNormal);
-        }
+        if (activeMarker) { activeMarker.setStyle(activeMarker.styleNormal); }
         activeMarker = markers[deviceId];
-        const ppm = deviceData.ppm;
-        let color = '#28a745';
-        if (ppm >= 100) color = '#dc3545';
-        else if (ppm >= 50) color = '#ffc107';
-        
+        const ppm = deviceData.ppm; let color = '#28a745';
+        if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
         const styleSelected = { radius: 10, fillOpacity: 1, stroke: true, weight: 3, color: '#fff', fillColor: color };
         activeMarker.setStyle(styleSelected);
-        
         map.setView([deviceData.lat, deviceData.lng], 17);
         updateDashboard(deviceData, deviceId);
         activeMarker.openPopup();
     }
-
     function updateMapMarker(id, data) {
-        const { lat, lng, ppm } = data;
-        let color = '#28a745';
-        if (ppm >= 100) color = '#dc3545';
-        else if (ppm >= 50) color = '#ffc107';
-
+        const { lat, lng, ppm } = data; let color = '#28a745';
+        if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
         const styleNormal = { radius: 8, fillOpacity: 0.8, stroke: false, fillColor: color };
-
-        if (!markers[id]) {
-            markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map);
-        }
-        
-        markers[id].setStyle(styleNormal); 
-        markers[id].styleNormal = styleNormal; 
+        if (!markers[id]) { markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map); }
+        markers[id].setStyle(styleNormal); markers[id].styleNormal = styleNormal; 
         const popupContent = `<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`;
         markers[id].bindPopup(popupContent);
-        
-        markers[id].off('click').on('click', () => {
-            highlightDevice(id, data);
-        });
+        markers[id].off('click').on('click', () => { highlightDevice(id, data); });
     }
-    
     function updateRoomPanel(deviceId, deviceData) {
-        const ppm = deviceData.ppm;
-        const card = document.createElement('div');
-        card.className = 'room-card';
-        
-        let statusClass = 'status-safe';
-        if (ppm >= 100) statusClass = 'status-danger';
-        else if (ppm >= 50) statusClass = 'status-warning';
+        const ppm = deviceData.ppm; const card = document.createElement('div'); card.className = 'room-card';
+        let statusClass = 'status-safe'; if (ppm >= 100) statusClass = 'status-danger'; else if (ppm >= 50) statusClass = 'status-warning';
         card.classList.add(statusClass);
-        
-        card.innerHTML = `
-            <h3>${deviceId}</h3>
-            <p>${ppm} PPM</p>
-        `;
-        
-        card.addEventListener('click', () => {
-            highlightDevice(deviceId, deviceData);
-        });
-        
+        card.innerHTML = `<h3>${deviceId}</h3><p>${ppm} PPM</p>`;
+        card.addEventListener('click', () => { highlightDevice(deviceId, deviceData); });
         roomPanel.appendChild(card);
     }
-
 </script>
 
 </body>
