@@ -9,7 +9,7 @@
     
     <style>
         /* --- ESTILOS GERAIS --- */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; transition: background-color 0.3s ease, color 0.3s ease; } /* Added transition */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; transition: background-color 0.3s ease, color 0.3s ease; }
         #map { height: 60vh; width: 100%; border-bottom: 1px solid #ccc; cursor: pointer; transition: border-color 0.3s ease; }
         .dashboard { padding: 25px; text-align: center; transition: background-color 0.3s ease; }
         .dashboard h1 { margin-top: 0; color: #1c1e21; transition: color 0.3s ease; }
@@ -27,7 +27,7 @@
         .room-panel-container { padding: 20px 25px; background-color: #fff; text-align: center; border-bottom: 1px solid #ccc; transition: background-color 0.3s ease, border-color 0.3s ease; }
         .room-panel-container h2 { margin-top: 0; margin-bottom: 20px; transition: color 0.3s ease; }
         #room-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding-bottom: 20px; }
-        .room-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; min-width: 200px; text-align: left; transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left-width: 6px; }
+        .room-card { position: relative; border: 1px solid #ddd; border-radius: 8px; padding: 15px; min-width: 200px; text-align: left; transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left-width: 6px; }
         .room-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .room-card h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #1c1e21; transition: color 0.3s ease; }
         .room-card p { font-size: 1.5em; font-weight: 600; margin: 0; transition: color 0.3s ease; }
@@ -60,7 +60,11 @@
         #logout-container { text-align: right; padding: 10px 20px; background-color: #e9ecef; transition: background-color 0.3s ease; }
         #logout-container span { margin-right: 15px; font-weight: bold; transition: color 0.3s ease; }
         #logout-button, #theme-toggle-button { cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 5px; padding: 5px 10px; }
-        #theme-toggle-button { margin-right: 10px; background-color: #5a6268; } /* Estilo ligeiramente diferente para o botão de tema */
+        #theme-toggle-button { margin-right: 10px; background-color: #5a6268; }
+
+        /* --- ESTILO BOTÃO REMOVER --- */
+        .remove-btn { position: absolute; top: 5px; right: 5px; background-color: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; line-height: 18px; text-align: center; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, background-color 0.2s; }
+        .remove-btn:hover { background-color: #c82333; opacity: 1; }
 
         /* ============================================= */
         /* ESTILOS DO TEMA ESCURO              */
@@ -86,48 +90,10 @@
         body.dark-theme .login-form input { background-color: #3a3a3a; border-color: #555; color: #e0e0e0; }
         body.dark-theme .login-form input::placeholder { color: #888; }
         body.dark-theme .divider { color: #aaa; }
-        body.dark-theme #logout-container span { color: #e0e0e0; } /* Ajuste cor do email no logout dark - CORRIGIDO */
-        /* ... seu CSS existente ... */
+        body.dark-theme #logout-container span { color: #e0e0e0; }
+        body.dark-theme .remove-btn { background-color: #a02a33; }
+        body.dark-theme .remove-btn:hover { background-color: #c82333; }
 
-/* ============================================= */
-/* ESTILO DO BOTÃO DE REMOVER              */
-/* ============================================= */
-.room-card {
-    position: relative; /* Necessário para posicionar o botão dentro */
-    /* ... outros estilos do room-card ... */
-}
-
-.remove-btn {
-    position: absolute; /* Posicionamento absoluto dentro do card */
-    top: 5px;
-    right: 5px;
-    background-color: #dc3545; /* Cor vermelha de perigo */
-    color: white;
-    border: none;
-    border-radius: 50%; /* Faz o botão redondo */
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
-    font-weight: bold;
-    line-height: 18px; /* Centraliza o 'X' verticalmente */
-    text-align: center;
-    cursor: pointer;
-    opacity: 0.7; /* Começa um pouco transparente */
-    transition: opacity 0.2s, background-color 0.2s;
-}
-
-.remove-btn:hover {
-    background-color: #c82333; /* Vermelho mais escuro no hover */
-    opacity: 1; /* Fica opaco no hover */
-}
-
-/* Ajuste no tema escuro */
-body.dark-theme .remove-btn {
-    background-color: #a02a33;
-}
-body.dark-theme .remove-btn:hover {
-    background-color: #c82333;
-}
     </style>
 </head>
 <body>
@@ -205,7 +171,7 @@ body.dark-theme .remove-btn:hover {
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const auth = firebase.auth();
-    const provider = new firebase.auth.GoogleAuthProvider(); // Provedor Google
+    const provider = new firebase.auth.GoogleAuthProvider();
 
     // =======================================================
     // ESPERA O HTML CARREGAR ANTES DE RODAR O RESTO DO CÓDIGO
@@ -217,7 +183,7 @@ body.dark-theme .remove-btn:hover {
         // Referências aos elementos do HTML
         const loginContainer = document.getElementById('login-container');
         const contentContainer = document.getElementById('content-container');
-        const logoutButton = document.getElementById('logout-button');
+        const logoutButton = document.getElementById('logout-button'); // <<<<<<<<<<<< DECLARADO AQUI
         const userEmailElement = document.getElementById('user-email');
         const roomPanel = document.getElementById('room-panel');
         const loginEmailInput = document.getElementById('login-email');
@@ -230,65 +196,44 @@ body.dark-theme .remove-btn:hover {
         const bodyElement = document.body;
 
         // Mapa e variáveis globais
-        // Verifica se o elemento 'map' existe antes de inicializar
         let map = null;
         if (document.getElementById('map')) {
             map = L.map('map').setView([-19.9208, -44.0542], 13);
-        } else {
-            console.error("ERRO CRÍTICO: Elemento 'map' não encontrado no DOM!");
-        }
+        } else { console.error("ERRO CRÍTICO: Elemento 'map' não encontrado!"); }
         let currentMapLayer = null;
         const markers = {};
         let activeMarker = null;
         let devicesRef = null;
 
-        // URLs das camadas de mapa
+        // URLs das camadas de mapa...
         const lightMapUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
         const lightMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
         const darkMapUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
         const darkMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
         // --- CÓDIGO DO TEMA ---
-        function updateMapTheme(theme) {
-            if (!map) return; // Não faz nada se o mapa não foi inicializado
-            if (currentMapLayer) { map.removeLayer(currentMapLayer); }
-            let newUrl = lightMapUrl; let newAttribution = lightMapAttribution;
-            if (theme === 'dark') { newUrl = darkMapUrl; newAttribution = darkMapAttribution; }
-            currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
-        }
+        function updateMapTheme(theme) { /* ... código ... */ }
         const currentTheme = localStorage.getItem('theme');
-        if (currentTheme === 'dark') {
-            bodyElement.classList.add('dark-theme');
-            if(themeToggleButton) themeToggleButton.textContent = '☀️';
-        } else {
-             if(themeToggleButton) themeToggleButton.textContent = '🌓';
-        }
-        if (themeToggleButton) {
-            themeToggleButton.onclick = () => {
-                bodyElement.classList.toggle('dark-theme');
-                let theme = 'light';
-                if (bodyElement.classList.contains('dark-theme')) {
-                    theme = 'dark'; themeToggleButton.textContent = '☀️';
-                } else { themeToggleButton.textContent = '🌓'; }
-                localStorage.setItem('theme', theme);
-                updateMapTheme(theme);
-            };
-        }
+        /* ... código ... */
+        if (themeToggleButton) { themeToggleButton.onclick = () => { /* ... código ... */ }; }
         // --- FIM CÓDIGO DO TEMA ---
 
         // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO ---
-        function handleAuthError(error) {
-            let message = ""; console.warn("Erro Auth:", error.code);
-            switch (error.code) {
-                case "auth/wrong-password": message = "Senha incorreta."; break;
-                case "auth/user-not-found": message = "Usuário não encontrado."; break;
-                case "auth/email-already-in-use": message = "E-mail já em uso."; break;
-                case "auth/weak-password": message = "Senha fraca (mín. 6 caracteres)."; break;
-                case "auth/invalid-email": message = "E-mail inválido."; break;
-                default: message = "Erro. Tente novamente.";
-            }
-            if(loginErrorMessage) loginErrorMessage.textContent = message;
+        function handleAuthError(error) { /* ... código ... */ }
+
+        // ========================================================== //
+        //          VINCULA O CLIQUE DO BOTÃO SAIR AQUI               //
+        // ========================================================== //
+        if (logoutButton) {
+            logoutButton.onclick = () => {
+                console.log(">>> Botão Sair clicado! Chamando auth.signOut()...");
+                auth.signOut();
+            };
+        } else {
+            console.error("ERRO: Botão Sair (logoutButton) não encontrado!");
         }
+        // ========================================================== //
+
 
         // --- LÓGICA DE AUTENTICAÇÃO ---
         auth.onAuthStateChanged((user) => {
@@ -296,243 +241,41 @@ body.dark-theme .remove-btn:hover {
 
             if (user) {
                 // ----- USUÁRIO LOGADO -----
-                console.log(">>> PASSO B: Usuário logado detectado. UID:", user.uid);
-
-                if(contentContainer) contentContainer.style.display = 'block';
-                if(loginContainer) loginContainer.style.display = 'none';
-                if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
-                if(loginErrorMessage) loginErrorMessage.textContent = "";
-                const userUidDisplay = document.getElementById('user-uid-display');
-                if(userUidDisplay) userUidDisplay.textContent = user.uid;
-
-                updateMapTheme(localStorage.getItem('theme') || 'light');
-                if (map) {
-                    // Atraso pequeno para garantir que o container está visível
-                    setTimeout(() => map.invalidateSize(), 100);
+                console.log(">>> PASSO B: Usuário logado detectado.");
+                // ... (código para mostrar conteúdo) ...
+                if (!devicesRef) { // Só inicia o listener se não estiver ativo
+                    const userUid = user.uid;
+                    const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
+                    console.log(">>> PASSO C: Preparando para ouvir o caminho:", userDevicesPath);
+                    devicesRef = database.ref(userDevicesPath);
+                    startDatabaseListener(devicesRef);
                 }
-
-
-                const userUid = user.uid;
-                const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
-                console.log(">>> PASSO C: Preparando para ouvir o caminho:", userDevicesPath);
-
-                devicesRef = database.ref(userDevicesPath);
-                startDatabaseListener(devicesRef);
 
             } else {
                 // ----- USUÁRIO DESLOGADO -----
                 console.log(">>> Usuário deslogado.");
-                if(contentContainer) contentContainer.style.display = 'none';
-                if(loginContainer) loginContainer.style.display = 'block';
+                 // ... (código para mostrar login) ...
 
-                // Vincula o clique do Google com signInWithPopup
-                if (googleLoginButton) {
-                    console.log(">>> Vinculando clique (POPUP) ao botão Google.");
-                    googleLoginButton.onclick = () => {
-                        console.log(">>> Botão Google clicado! Chamando signInWithPopup...");
-                        auth.signInWithPopup(provider)
-                            .then((result) => {
-                                console.log(">>> Login via Popup bem-sucedido:", result.user.email);
-                            })
-                            .catch((error) => {
-                                console.error(">>> Erro no signInWithPopup:", error);
-                                handleAuthError(error);
-                            });
-                    };
-                } else {
-                    console.error(">>> ERRO CRÍTICO: Botão Google não encontrado ao vincular clique.");
-                }
+                // Vincula cliques dos botões de LOGIN (Google, E-mail, Registro)
+                if (googleLoginButton) { googleLoginButton.onclick = () => { /* ... (signInWithPopup) ... */ }; }
+                if (loginEmailButton) { loginEmailButton.onclick = () => { /* ... (signInWithEmail) ... */ }; }
+                if (registerEmailButton) { registerEmailButton.onclick = () => { /* ... (createUser) ... */ }; }
+                // O logoutButton.onclick NÃO fica aqui
 
-                // Vincula cliques para E-mail/Senha
-                if (loginEmailButton) {
-                    loginEmailButton.onclick = () => {
-                        const email = loginEmailInput.value; const password = loginPasswordInput.value;
-                        if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
-                        auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
-                    };
-                 }
-                 if (registerEmailButton) {
-                     registerEmailButton.onclick = () => {
-                         const email = loginEmailInput.value; const password = loginPasswordInput.value;
-                         if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
-                         auth.createUserWithEmailAndPassword(email, password)
-                             .then(cred => console.log("Conta criada:", cred.user))
-                             .catch(handleAuthError);
-                     };
-                 }
-                 if (logoutButton) {
-                     logoutButton.onclick = () => { auth.signOut(); };
-                 }
-
-
-                if (devicesRef) { devicesRef.off(); console.log(">>> Ouvinte DB removido."); }
-                clearDashboardAndMap();
-                if (currentMapLayer && map) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
+                // ... (código para limpar tela e remover listener DB) ...
+                if (devicesRef) { devicesRef.off(); devicesRef = null; console.log(">>> Ouvinte DB removido."); } // Zera a ref
+                // ...
             }
         });
 
-        // ==================================================================
-        //        FUNÇÃO STARTDATABASELISTENER COM DIAGNÓSTICOS
-        // ==================================================================
-        function startDatabaseListener(ref) {
-            console.log(">>> PASSO D: Anexando ouvinte .on('value') ao caminho:", ref.toString());
-
-            ref.on('value', (snapshot) => {
-                console.log(">>> PASSO E: Ouvinte disparado! Recebeu um snapshot.");
-                const allDevices = snapshot.val();
-                console.log(">>> PASSO F: Conteúdo do snapshot:", allDevices);
-
-                clearDashboardAndMap();
-
-                if (!allDevices) {
-                    console.log(">>> PASSO G1: Nenhum dispositivo encontrado no snapshot.");
-                    if(roomPanel) roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
-                    return;
-                }
-                console.log(">>> PASSO G2: Dispositivos encontrados. Processando...");
-
-                const devicesArray = Object.entries(allDevices);
-                devicesArray.sort((a, b) => b[1].ppm - a[1].ppm);
-
-                for (const [deviceId, deviceData] of devicesArray) {
-                    console.log(">>> PASSO H: Processando dispositivo:", deviceId);
-                    // Adiciona verificações para garantir que os dados existem
-                    if (deviceData && typeof deviceData.lat !== 'undefined' && typeof deviceData.lng !== 'undefined' && typeof deviceData.ppm !== 'undefined') {
-                        updateMapMarker(deviceId, deviceData);
-                        updateRoomPanel(deviceId, deviceData);
-                    } else {
-                        console.warn(`>>> AVISO: Dados inválidos ou incompletos para o dispositivo ${deviceId}`, deviceData);
-                    }
-                }
-                console.log(">>> PASSO I: Processamento dos dispositivos concluído.");
-            }, (error) => {
-                 console.error(">>> ERRO ao anexar ou receber dados do listener:", error);
-            });
-        }
-
         // --- FUNÇÕES DO DASHBOARD ---
-        function clearDashboardAndMap() {
-            updateDashboard(null); if(roomPanel) roomPanel.innerHTML = '';
-            // Limpa marcadores do mapa
-            for (const markerId in markers) {
-                if (map && markers[markerId]) { // Verifica se o mapa e o marcador existem
-                   map.removeLayer(markers[markerId]);
-                }
-                delete markers[markerId]; // Remove a referência
-            }
-            if (activeMarker) { activeMarker = null; }
-        }
-
-        function updateDashboard(data, deviceId) {
-             const ppmElement = document.getElementById('current-ppm');
-             const statusElement = document.getElementById('current-status');
-             const deviceIdElement = document.getElementById('current-device-id');
-
-             if (!ppmElement || !statusElement || !deviceIdElement) return; // Sai se os elementos não existem
-
-             if (!data) {
-                ppmElement.textContent = "--"; statusElement.textContent = "--";
-                deviceIdElement.textContent = "Selecione um dispositivo no mapa ou painel"; return;
-            }
-            deviceIdElement.textContent = `Mostrando dados do: ${deviceId}`;
-            const ppm = data.ppm; ppmElement.textContent = ppm; statusElement.className = "value";
-            if (ppm < 50) { statusElement.textContent = "Seguro"; statusElement.classList.add('status-safe'); }
-            else if (ppm < 100) { statusElement.textContent = "Atenção"; statusElement.classList.add('status-warning'); }
-            else { statusElement.textContent = "Perigo"; statusElement.classList.add('status-danger'); }
-        }
-
-        function highlightDevice(deviceId, deviceData) {
-            if (!map || !markers[deviceId]) return; // Sai se mapa ou marcador não existem
-
-            if (activeMarker) {
-                if (activeMarker.styleNormal) activeMarker.setStyle(activeMarker.styleNormal); // Volta ao normal
-                else activeMarker.setStyle({ radius: 8, fillOpacity: 0.8, stroke: false }); // Estilo padrão
-            }
-            activeMarker = markers[deviceId];
-            const ppm = deviceData.ppm; let color = '#28a745';
-            if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
-            const styleSelected = { radius: 10, fillOpacity: 1, stroke: true, weight: 3, color: '#fff', fillColor: color };
-            activeMarker.setStyle(styleSelected);
-            map.setView([deviceData.lat, deviceData.lng], 17);
-            updateDashboard(deviceData, deviceId);
-            activeMarker.openPopup();
-        }
-
-        function updateMapMarker(id, data) {
-            console.log(`>>> updateMapMarker: Tentando adicionar/atualizar marcador para ${id}`);
-             if (!map) { console.error(">>> updateMapMarker: ERRO - Mapa não inicializado!"); return; } // Verifica mapa
-
-            const { lat, lng, ppm } = data; let color = '#28a745';
-            if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
-            const styleNormal = { radius: 8, fillOpacity: 0.8, stroke: false, fillColor: color };
-
-            try {
-                if (!markers[id]) {
-                    markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map);
-                    console.log(`>>> updateMapMarker: Marcador ${id} CRIADO.`);
-                } else {
-                     markers[id].setLatLng([lat, lng]); // Atualiza posição caso mude
-                     markers[id].setStyle(styleNormal);
-                     console.log(`>>> updateMapMarker: Marcador ${id} ATUALIZADO.`);
-                }
-                markers[id].styleNormal = styleNormal;
-                const popupContent = `<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`;
-                markers[id].bindPopup(popupContent);
-                markers[id].off('click').on('click', () => { highlightDevice(id, data); });
-            } catch (e) {
-                console.error(`>>> updateMapMarker: ERRO INESPERADO ao processar marcador ${id}:`, e);
-            }
-        }
-
-        function updateRoomPanel(deviceId, deviceData) {
-            console.log(`>>> updateRoomPanel: Tentando criar card para ${deviceId}`);
-            const ppm = deviceData.ppm;
-            const card = document.createElement('div');
-            card.className = 'room-card';
-            let statusClass = 'status-safe';
-            if (ppm >= 100) statusClass = 'status-danger';
-            else if (ppm >= 50) statusClass = 'status-warning';
-            card.classList.add(statusClass);
-            card.innerHTML = `<h3>${deviceId}</h3><p>${ppm} PPM</p>`;
-
-            const removeButton = document.createElement('button');
-            removeButton.className = 'remove-btn';
-            removeButton.textContent = 'X';
-            removeButton.title = `Remover ${deviceId}`;
-            removeButton.addEventListener('click', (event) => {
-                event.stopPropagation();
-                removeDevice(deviceId);
-            });
-            card.appendChild(removeButton);
-
-            card.addEventListener('click', () => {
-                highlightDevice(deviceId, deviceData);
-            });
-
-            if (roomPanel) {
-                roomPanel.appendChild(card);
-                console.log(`>>> updateRoomPanel: Card ${deviceId} ADICIONADO.`);
-            } else {
-                console.error(">>> updateRoomPanel: ERRO - Elemento 'roomPanel' não encontrado!");
-            }
-        }
-
-        function removeDevice(deviceId) {
-            if (confirm(`Tem certeza que deseja remover o dispositivo "${deviceId}"?`)) {
-                const user = auth.currentUser;
-                if (user) {
-                    const userUid = user.uid;
-                    const devicePath = `dispositivos_por_usuario/${userUid}/${deviceId}`;
-                    console.log("Removendo dispositivo:", devicePath);
-                    database.ref(devicePath).remove()
-                        .then(() => console.log(`Removido: ${deviceId}`))
-                        .catch((error) => {
-                             console.error(`Erro ao remover ${deviceId}:`, error);
-                             alert(`Erro ao remover: ${error.message}`);
-                        });
-                } else { console.error("Usuário não logado para remover."); }
-            }
-        }
+        function startDatabaseListener(ref) { /* ... com logs ... */ }
+        function clearDashboardAndMap() { /* ... */ }
+        function updateDashboard(data, deviceId) { /* ... */ }
+        function highlightDevice(deviceId, deviceData) { /* ... */ }
+        function updateMapMarker(id, data) { /* ... com logs ... */ }
+        function updateRoomPanel(deviceId, deviceData) { /* ... com logs e botão remover ... */ }
+        function removeDevice(deviceId) { /* ... */ }
 
     }); // --- FIM DO 'DOMContentLoaded' ---
 </script>
