@@ -230,7 +230,13 @@ body.dark-theme .remove-btn:hover {
         const bodyElement = document.body;
 
         // Mapa e variáveis globais
-        const map = L.map('map').setView([-19.9208, -44.0542], 13);
+        // Verifica se o elemento 'map' existe antes de inicializar
+        let map = null;
+        if (document.getElementById('map')) {
+            map = L.map('map').setView([-19.9208, -44.0542], 13);
+        } else {
+            console.error("ERRO CRÍTICO: Elemento 'map' não encontrado no DOM!");
+        }
         let currentMapLayer = null;
         const markers = {};
         let activeMarker = null;
@@ -243,76 +249,123 @@ body.dark-theme .remove-btn:hover {
         const darkMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
         // --- CÓDIGO DO TEMA ---
-        function updateMapTheme(theme) { /* ... (sem alteração) ... */ }
+        function updateMapTheme(theme) {
+            if (!map) return; // Não faz nada se o mapa não foi inicializado
+            if (currentMapLayer) { map.removeLayer(currentMapLayer); }
+            let newUrl = lightMapUrl; let newAttribution = lightMapAttribution;
+            if (theme === 'dark') { newUrl = darkMapUrl; newAttribution = darkMapAttribution; }
+            currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
+        }
         const currentTheme = localStorage.getItem('theme');
-        /* ... (lógica inicial do tema sem alteração) ... */
+        if (currentTheme === 'dark') {
+            bodyElement.classList.add('dark-theme');
+            if(themeToggleButton) themeToggleButton.textContent = '☀️';
+        } else {
+             if(themeToggleButton) themeToggleButton.textContent = '🌓';
+        }
         if (themeToggleButton) {
-            themeToggleButton.onclick = () => { /* ... (lógica do clique sem alteração) ... */ };
+            themeToggleButton.onclick = () => {
+                bodyElement.classList.toggle('dark-theme');
+                let theme = 'light';
+                if (bodyElement.classList.contains('dark-theme')) {
+                    theme = 'dark'; themeToggleButton.textContent = '☀️';
+                } else { themeToggleButton.textContent = '🌓'; }
+                localStorage.setItem('theme', theme);
+                updateMapTheme(theme);
+            };
         }
         // --- FIM CÓDIGO DO TEMA ---
 
         // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO ---
-        // Funções de E-mail/Senha (sem alteração)
-        if (loginEmailButton) { loginEmailButton.onclick = () => { /* ... */ }; }
-        if (registerEmailButton) { registerEmailButton.onclick = () => { /* ... */ }; }
-        if (logoutButton) { logoutButton.onclick = () => { auth.signOut(); }; }
-        function handleAuthError(error) { /* ... (sem alteração) ... */ }
+        function handleAuthError(error) {
+            let message = ""; console.warn("Erro Auth:", error.code);
+            switch (error.code) {
+                case "auth/wrong-password": message = "Senha incorreta."; break;
+                case "auth/user-not-found": message = "Usuário não encontrado."; break;
+                case "auth/email-already-in-use": message = "E-mail já em uso."; break;
+                case "auth/weak-password": message = "Senha fraca (mín. 6 caracteres)."; break;
+                case "auth/invalid-email": message = "E-mail inválido."; break;
+                default: message = "Erro. Tente novamente.";
+            }
+            if(loginErrorMessage) loginErrorMessage.textContent = message;
+        }
 
-        // ==================================================================
-        //        LÓGICA DE AUTENTICAÇÃO COM POPUP E DIAGNÓSTICOS
-        // ==================================================================
-
-        // REMOVIDO: auth.getRedirectResult()
-
+        // --- LÓGICA DE AUTENTICAÇÃO ---
         auth.onAuthStateChanged((user) => {
-            console.log(">>> PASSO A: onAuthStateChanged disparado. User:", user ? user.uid : "null"); // LOG DIAGNÓSTICO A
+            console.log(">>> PASSO A: onAuthStateChanged disparado. User:", user ? user.uid : "null");
 
             if (user) {
                 // ----- USUÁRIO LOGADO -----
-                console.log(">>> PASSO B: Usuário logado detectado. UID:", user.uid); // LOG DIAGNÓSTICO B
+                console.log(">>> PASSO B: Usuário logado detectado. UID:", user.uid);
 
                 if(contentContainer) contentContainer.style.display = 'block';
                 if(loginContainer) loginContainer.style.display = 'none';
                 if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
                 if(loginErrorMessage) loginErrorMessage.textContent = "";
-                if(document.getElementById('user-uid-display')) document.getElementById('user-uid-display').textContent = user.uid;
+                const userUidDisplay = document.getElementById('user-uid-display');
+                if(userUidDisplay) userUidDisplay.textContent = user.uid;
 
                 updateMapTheme(localStorage.getItem('theme') || 'light');
-                if (map) map.invalidateSize();
+                if (map) {
+                    // Atraso pequeno para garantir que o container está visível
+                    setTimeout(() => map.invalidateSize(), 100);
+                }
+
 
                 const userUid = user.uid;
                 const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
-                console.log(">>> PASSO C: Preparando para ouvir o caminho:", userDevicesPath); // LOG DIAGNÓSTICO C
+                console.log(">>> PASSO C: Preparando para ouvir o caminho:", userDevicesPath);
 
                 devicesRef = database.ref(userDevicesPath);
-                startDatabaseListener(devicesRef); // Chama a função que anexa o ouvinte
+                startDatabaseListener(devicesRef);
 
             } else {
                 // ----- USUÁRIO DESLOGADO -----
-                console.log(">>> Usuário deslogado."); // LOG DIAGNÓSTICO
+                console.log(">>> Usuário deslogado.");
                 if(contentContainer) contentContainer.style.display = 'none';
                 if(loginContainer) loginContainer.style.display = 'block';
 
                 // Vincula o clique do Google com signInWithPopup
                 if (googleLoginButton) {
-                    console.log(">>> Vinculando clique (POPUP) ao botão Google."); // LOG DIAGNÓSTICO
+                    console.log(">>> Vinculando clique (POPUP) ao botão Google.");
                     googleLoginButton.onclick = () => {
-                        console.log(">>> Botão Google clicado! Chamando signInWithPopup..."); // LOG DIAGNÓSTICO
+                        console.log(">>> Botão Google clicado! Chamando signInWithPopup...");
                         auth.signInWithPopup(provider)
                             .then((result) => {
-                                console.log(">>> Login via Popup bem-sucedido:", result.user.email); // LOG DIAGNÓSTICO
-                                // O onAuthStateChanged vai cuidar da UI
+                                console.log(">>> Login via Popup bem-sucedido:", result.user.email);
                             })
                             .catch((error) => {
-                                console.error(">>> Erro no signInWithPopup:", error); // LOG DIAGNÓSTICO ERRO
+                                console.error(">>> Erro no signInWithPopup:", error);
                                 handleAuthError(error);
                             });
                     };
                 } else {
-                    console.error(">>> ERRO CRÍTICO: Botão Google não encontrado ao vincular clique."); // LOG DIAGNÓSTICO ERRO
+                    console.error(">>> ERRO CRÍTICO: Botão Google não encontrado ao vincular clique.");
                 }
 
-                if (devicesRef) { devicesRef.off(); console.log(">>> Ouvinte DB removido."); } // LOG DIAGNÓSTICO
+                // Vincula cliques para E-mail/Senha
+                if (loginEmailButton) {
+                    loginEmailButton.onclick = () => {
+                        const email = loginEmailInput.value; const password = loginPasswordInput.value;
+                        if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
+                        auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
+                    };
+                 }
+                 if (registerEmailButton) {
+                     registerEmailButton.onclick = () => {
+                         const email = loginEmailInput.value; const password = loginPasswordInput.value;
+                         if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
+                         auth.createUserWithEmailAndPassword(email, password)
+                             .then(cred => console.log("Conta criada:", cred.user))
+                             .catch(handleAuthError);
+                     };
+                 }
+                 if (logoutButton) {
+                     logoutButton.onclick = () => { auth.signOut(); };
+                 }
+
+
+                if (devicesRef) { devicesRef.off(); console.log(">>> Ouvinte DB removido."); }
                 clearDashboardAndMap();
                 if (currentMapLayer && map) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
             }
@@ -322,43 +375,164 @@ body.dark-theme .remove-btn:hover {
         //        FUNÇÃO STARTDATABASELISTENER COM DIAGNÓSTICOS
         // ==================================================================
         function startDatabaseListener(ref) {
-            console.log(">>> PASSO D: Anexando ouvinte .on('value') ao caminho:", ref.toString()); // LOG DIAGNÓSTICO D
+            console.log(">>> PASSO D: Anexando ouvinte .on('value') ao caminho:", ref.toString());
 
             ref.on('value', (snapshot) => {
-                console.log(">>> PASSO E: Ouvinte disparado! Recebeu um snapshot."); // LOG DIAGNÓSTICO E
+                console.log(">>> PASSO E: Ouvinte disparado! Recebeu um snapshot.");
                 const allDevices = snapshot.val();
-                console.log(">>> PASSO F: Conteúdo do snapshot:", allDevices); // LOG DIAGNÓSTICO F
+                console.log(">>> PASSO F: Conteúdo do snapshot:", allDevices);
 
                 clearDashboardAndMap();
 
                 if (!allDevices) {
-                    console.log(">>> PASSO G1: Nenhum dispositivo encontrado no snapshot."); // LOG DIAGNÓSTICO G1
+                    console.log(">>> PASSO G1: Nenhum dispositivo encontrado no snapshot.");
                     if(roomPanel) roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
                     return;
                 }
-                console.log(">>> PASSO G2: Dispositivos encontrados. Processando..."); // LOG DIAGNÓSTICO G2
+                console.log(">>> PASSO G2: Dispositivos encontrados. Processando...");
 
                 const devicesArray = Object.entries(allDevices);
                 devicesArray.sort((a, b) => b[1].ppm - a[1].ppm);
 
                 for (const [deviceId, deviceData] of devicesArray) {
-                    console.log(">>> PASSO H: Processando dispositivo:", deviceId); // LOG DIAGNÓSTICO H
-                    updateMapMarker(deviceId, deviceData);
-                    updateRoomPanel(deviceId, deviceData);
+                    console.log(">>> PASSO H: Processando dispositivo:", deviceId);
+                    // Adiciona verificações para garantir que os dados existem
+                    if (deviceData && typeof deviceData.lat !== 'undefined' && typeof deviceData.lng !== 'undefined' && typeof deviceData.ppm !== 'undefined') {
+                        updateMapMarker(deviceId, deviceData);
+                        updateRoomPanel(deviceId, deviceData);
+                    } else {
+                        console.warn(`>>> AVISO: Dados inválidos ou incompletos para o dispositivo ${deviceId}`, deviceData);
+                    }
                 }
-                console.log(">>> PASSO I: Processamento dos dispositivos concluído."); // LOG DIAGNÓSTICO I
+                console.log(">>> PASSO I: Processamento dos dispositivos concluído.");
             }, (error) => {
-                 console.error(">>> ERRO ao anexar ou receber dados do listener:", error); // LOG DIAGNÓSTICO ERRO
+                 console.error(">>> ERRO ao anexar ou receber dados do listener:", error);
             });
         }
 
         // --- FUNÇÕES DO DASHBOARD ---
-        function clearDashboardAndMap() { /* ... (sem alteração) ... */ }
-        function updateDashboard(data, deviceId) { /* ... (sem alteração) ... */ }
-        function highlightDevice(deviceId, deviceData) { /* ... (sem alteração) ... */ }
-        function updateMapMarker(id, data) { /* ... (sem alteração) ... */ }
-        function updateRoomPanel(deviceId, deviceData) { /* ... (sem alteração) ... */ }
-        function removeDevice(deviceId) { /* ... (sem alteração) ... */ }
+        function clearDashboardAndMap() {
+            updateDashboard(null); if(roomPanel) roomPanel.innerHTML = '';
+            // Limpa marcadores do mapa
+            for (const markerId in markers) {
+                if (map && markers[markerId]) { // Verifica se o mapa e o marcador existem
+                   map.removeLayer(markers[markerId]);
+                }
+                delete markers[markerId]; // Remove a referência
+            }
+            if (activeMarker) { activeMarker = null; }
+        }
+
+        function updateDashboard(data, deviceId) {
+             const ppmElement = document.getElementById('current-ppm');
+             const statusElement = document.getElementById('current-status');
+             const deviceIdElement = document.getElementById('current-device-id');
+
+             if (!ppmElement || !statusElement || !deviceIdElement) return; // Sai se os elementos não existem
+
+             if (!data) {
+                ppmElement.textContent = "--"; statusElement.textContent = "--";
+                deviceIdElement.textContent = "Selecione um dispositivo no mapa ou painel"; return;
+            }
+            deviceIdElement.textContent = `Mostrando dados do: ${deviceId}`;
+            const ppm = data.ppm; ppmElement.textContent = ppm; statusElement.className = "value";
+            if (ppm < 50) { statusElement.textContent = "Seguro"; statusElement.classList.add('status-safe'); }
+            else if (ppm < 100) { statusElement.textContent = "Atenção"; statusElement.classList.add('status-warning'); }
+            else { statusElement.textContent = "Perigo"; statusElement.classList.add('status-danger'); }
+        }
+
+        function highlightDevice(deviceId, deviceData) {
+            if (!map || !markers[deviceId]) return; // Sai se mapa ou marcador não existem
+
+            if (activeMarker) {
+                if (activeMarker.styleNormal) activeMarker.setStyle(activeMarker.styleNormal); // Volta ao normal
+                else activeMarker.setStyle({ radius: 8, fillOpacity: 0.8, stroke: false }); // Estilo padrão
+            }
+            activeMarker = markers[deviceId];
+            const ppm = deviceData.ppm; let color = '#28a745';
+            if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
+            const styleSelected = { radius: 10, fillOpacity: 1, stroke: true, weight: 3, color: '#fff', fillColor: color };
+            activeMarker.setStyle(styleSelected);
+            map.setView([deviceData.lat, deviceData.lng], 17);
+            updateDashboard(deviceData, deviceId);
+            activeMarker.openPopup();
+        }
+
+        function updateMapMarker(id, data) {
+            console.log(`>>> updateMapMarker: Tentando adicionar/atualizar marcador para ${id}`);
+             if (!map) { console.error(">>> updateMapMarker: ERRO - Mapa não inicializado!"); return; } // Verifica mapa
+
+            const { lat, lng, ppm } = data; let color = '#28a745';
+            if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
+            const styleNormal = { radius: 8, fillOpacity: 0.8, stroke: false, fillColor: color };
+
+            try {
+                if (!markers[id]) {
+                    markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map);
+                    console.log(`>>> updateMapMarker: Marcador ${id} CRIADO.`);
+                } else {
+                     markers[id].setLatLng([lat, lng]); // Atualiza posição caso mude
+                     markers[id].setStyle(styleNormal);
+                     console.log(`>>> updateMapMarker: Marcador ${id} ATUALIZADO.`);
+                }
+                markers[id].styleNormal = styleNormal;
+                const popupContent = `<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`;
+                markers[id].bindPopup(popupContent);
+                markers[id].off('click').on('click', () => { highlightDevice(id, data); });
+            } catch (e) {
+                console.error(`>>> updateMapMarker: ERRO INESPERADO ao processar marcador ${id}:`, e);
+            }
+        }
+
+        function updateRoomPanel(deviceId, deviceData) {
+            console.log(`>>> updateRoomPanel: Tentando criar card para ${deviceId}`);
+            const ppm = deviceData.ppm;
+            const card = document.createElement('div');
+            card.className = 'room-card';
+            let statusClass = 'status-safe';
+            if (ppm >= 100) statusClass = 'status-danger';
+            else if (ppm >= 50) statusClass = 'status-warning';
+            card.classList.add(statusClass);
+            card.innerHTML = `<h3>${deviceId}</h3><p>${ppm} PPM</p>`;
+
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-btn';
+            removeButton.textContent = 'X';
+            removeButton.title = `Remover ${deviceId}`;
+            removeButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                removeDevice(deviceId);
+            });
+            card.appendChild(removeButton);
+
+            card.addEventListener('click', () => {
+                highlightDevice(deviceId, deviceData);
+            });
+
+            if (roomPanel) {
+                roomPanel.appendChild(card);
+                console.log(`>>> updateRoomPanel: Card ${deviceId} ADICIONADO.`);
+            } else {
+                console.error(">>> updateRoomPanel: ERRO - Elemento 'roomPanel' não encontrado!");
+            }
+        }
+
+        function removeDevice(deviceId) {
+            if (confirm(`Tem certeza que deseja remover o dispositivo "${deviceId}"?`)) {
+                const user = auth.currentUser;
+                if (user) {
+                    const userUid = user.uid;
+                    const devicePath = `dispositivos_por_usuario/${userUid}/${deviceId}`;
+                    console.log("Removendo dispositivo:", devicePath);
+                    database.ref(devicePath).remove()
+                        .then(() => console.log(`Removido: ${deviceId}`))
+                        .catch((error) => {
+                             console.error(`Erro ao remover ${deviceId}:`, error);
+                             alert(`Erro ao remover: ${error.message}`);
+                        });
+                } else { console.error("Usuário não logado para remover."); }
+            }
+        }
 
     }); // --- FIM DO 'DOMContentLoaded' ---
 </script>
