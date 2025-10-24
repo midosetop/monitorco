@@ -259,15 +259,18 @@ body.dark-theme .remove-btn:hover {
         function handleAuthError(error) { /* ... (sem alteração) ... */ }
 
         // ==================================================================
-        //        LÓGICA DE AUTENTICAÇÃO ATUALIZADA (VOLTANDO PARA POPUP)
+        //        LÓGICA DE AUTENTICAÇÃO COM POPUP E DIAGNÓSTICOS
         // ==================================================================
 
-        // REMOVIDO: auth.getRedirectResult() não é necessário para popup
+        // REMOVIDO: auth.getRedirectResult()
 
         auth.onAuthStateChanged((user) => {
-            console.log("onAuthStateChanged disparado. User:", user ? user.uid : "null");
+            console.log(">>> PASSO A: onAuthStateChanged disparado. User:", user ? user.uid : "null"); // LOG DIAGNÓSTICO A
+
             if (user) {
                 // ----- USUÁRIO LOGADO -----
+                console.log(">>> PASSO B: Usuário logado detectado. UID:", user.uid); // LOG DIAGNÓSTICO B
+
                 if(contentContainer) contentContainer.style.display = 'block';
                 if(loginContainer) loginContainer.style.display = 'none';
                 if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
@@ -279,43 +282,77 @@ body.dark-theme .remove-btn:hover {
 
                 const userUid = user.uid;
                 const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
+                console.log(">>> PASSO C: Preparando para ouvir o caminho:", userDevicesPath); // LOG DIAGNÓSTICO C
+
                 devicesRef = database.ref(userDevicesPath);
-                startDatabaseListener(devicesRef);
+                startDatabaseListener(devicesRef); // Chama a função que anexa o ouvinte
+
             } else {
                 // ----- USUÁRIO DESLOGADO -----
+                console.log(">>> Usuário deslogado."); // LOG DIAGNÓSTICO
                 if(contentContainer) contentContainer.style.display = 'none';
                 if(loginContainer) loginContainer.style.display = 'block';
 
-                // ==========================================================
-                //    VINCULA O CLIQUE DO GOOGLE COM signInWithPopup
-                // ==========================================================
+                // Vincula o clique do Google com signInWithPopup
                 if (googleLoginButton) {
-                    console.log("Usuário deslogado. Vinculando clique (POPUP) ao botão Google.");
+                    console.log(">>> Vinculando clique (POPUP) ao botão Google."); // LOG DIAGNÓSTICO
                     googleLoginButton.onclick = () => {
-                        console.log("Botão Google clicado! Chamando signInWithPopup...");
-                        auth.signInWithPopup(provider) // <-- VOLTAMOS PARA POPUP
+                        console.log(">>> Botão Google clicado! Chamando signInWithPopup..."); // LOG DIAGNÓSTICO
+                        auth.signInWithPopup(provider)
                             .then((result) => {
-                                console.log("Login via Popup bem-sucedido:", result.user.email);
+                                console.log(">>> Login via Popup bem-sucedido:", result.user.email); // LOG DIAGNÓSTICO
                                 // O onAuthStateChanged vai cuidar da UI
                             })
                             .catch((error) => {
-                                console.error("Erro no signInWithPopup:", error);
+                                console.error(">>> Erro no signInWithPopup:", error); // LOG DIAGNÓSTICO ERRO
                                 handleAuthError(error);
                             });
                     };
                 } else {
-                    console.error("Botão Google não encontrado ao tentar vincular clique.");
+                    console.error(">>> ERRO CRÍTICO: Botão Google não encontrado ao vincular clique."); // LOG DIAGNÓSTICO ERRO
                 }
-                // ==========================================================
 
-                if (devicesRef) { devicesRef.off(); console.log("Listener DB removido."); }
+                if (devicesRef) { devicesRef.off(); console.log(">>> Ouvinte DB removido."); } // LOG DIAGNÓSTICO
                 clearDashboardAndMap();
                 if (currentMapLayer && map) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
             }
         });
 
+        // ==================================================================
+        //        FUNÇÃO STARTDATABASELISTENER COM DIAGNÓSTICOS
+        // ==================================================================
+        function startDatabaseListener(ref) {
+            console.log(">>> PASSO D: Anexando ouvinte .on('value') ao caminho:", ref.toString()); // LOG DIAGNÓSTICO D
+
+            ref.on('value', (snapshot) => {
+                console.log(">>> PASSO E: Ouvinte disparado! Recebeu um snapshot."); // LOG DIAGNÓSTICO E
+                const allDevices = snapshot.val();
+                console.log(">>> PASSO F: Conteúdo do snapshot:", allDevices); // LOG DIAGNÓSTICO F
+
+                clearDashboardAndMap();
+
+                if (!allDevices) {
+                    console.log(">>> PASSO G1: Nenhum dispositivo encontrado no snapshot."); // LOG DIAGNÓSTICO G1
+                    if(roomPanel) roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
+                    return;
+                }
+                console.log(">>> PASSO G2: Dispositivos encontrados. Processando..."); // LOG DIAGNÓSTICO G2
+
+                const devicesArray = Object.entries(allDevices);
+                devicesArray.sort((a, b) => b[1].ppm - a[1].ppm);
+
+                for (const [deviceId, deviceData] of devicesArray) {
+                    console.log(">>> PASSO H: Processando dispositivo:", deviceId); // LOG DIAGNÓSTICO H
+                    updateMapMarker(deviceId, deviceData);
+                    updateRoomPanel(deviceId, deviceData);
+                }
+                console.log(">>> PASSO I: Processamento dos dispositivos concluído."); // LOG DIAGNÓSTICO I
+            }, (error) => {
+                 console.error(">>> ERRO ao anexar ou receber dados do listener:", error); // LOG DIAGNÓSTICO ERRO
+            });
+        }
+
         // --- FUNÇÕES DO DASHBOARD ---
-        function startDatabaseListener(ref) { /* ... (sem alteração) ... */ }
         function clearDashboardAndMap() { /* ... (sem alteração) ... */ }
         function updateDashboard(data, deviceId) { /* ... (sem alteração) ... */ }
         function highlightDevice(deviceId, deviceData) { /* ... (sem alteração) ... */ }
