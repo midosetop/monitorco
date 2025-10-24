@@ -190,7 +190,7 @@ body.dark-theme .remove-btn:hover {
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
 <script>
-    // Configuração do Firebase (sem alterações)
+    // Configuração do Firebase (SEMPRE AQUI FORA)
     const firebaseConfig = {
       apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s",
       authDomain: "mostra-f2718.firebaseapp.com",
@@ -201,192 +201,218 @@ body.dark-theme .remove-btn:hover {
       appId: "1:581453261928:web:5b92c9aa0cf0cbe4fd5fdd"
     };
 
-    // Inicializa o Firebase
+    // Inicializa o Firebase (SEMPRE AQUI FORA)
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const auth = firebase.auth();
+    const provider = new firebase.auth.GoogleAuthProvider(); // Provedor Google (aqui fora)
 
-    // --- CÓDIGO DO TEMA (sem alterações) ---
-    const themeToggleButton = document.getElementById('theme-toggle-button');
-    /* ... resto do código do tema ... */
+    // =======================================================
+    // ESPERA O HTML CARREGAR ANTES DE RODAR O RESTO DO CÓDIGO
+    // =======================================================
+    document.addEventListener('DOMContentLoaded', () => {
 
-    // Referências aos elementos do HTML
-    const loginContainer = document.getElementById('login-container');
-    /* ... resto das referências ... */
+        console.log("DOM Carregado. Iniciando script principal."); // Log de confirmação
 
-    // Mapa e variáveis globais
-    const map = L.map('map').setView([-19.9208, -44.0542], 13);
-    /* ... resto das variáveis ... */
-    let devicesRef = null;
+        // Referências aos elementos do HTML (AGORA AQUI DENTRO)
+        const loginContainer = document.getElementById('login-container');
+        const contentContainer = document.getElementById('content-container');
+        const logoutButton = document.getElementById('logout-button');
+        const userEmailElement = document.getElementById('user-email');
+        const roomPanel = document.getElementById('room-panel');
+        const loginEmailInput = document.getElementById('login-email');
+        const loginPasswordInput = document.getElementById('login-password');
+        const loginEmailButton = document.getElementById('login-button-email');
+        const registerEmailButton = document.getElementById('register-button-email');
+        const googleLoginButton = document.getElementById('google-login-button'); // DEVE SER ENCONTRADO AGORA
+        const loginErrorMessage = document.getElementById('login-error-message');
+        const themeToggleButton = document.getElementById('theme-toggle-button');
+        const bodyElement = document.body;
 
-    // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO ---
-    const provider = new firebase.auth.GoogleAuthProvider();
-    googleLoginButton.onclick = () => {
-        console.log("Iniciando signInWithRedirect..."); // Log para depuração
-        auth.signInWithRedirect(provider);
-    };
-    loginEmailButton.onclick = () => { /* ...código sem alteração... */ };
-    registerEmailButton.onclick = () => { /* ...código sem alteração... */ };
-    logoutButton.onclick = () => { auth.signOut(); };
-    function handleAuthError(error) { /* ...código sem alteração... */ }
+        // Mapa e variáveis globais (mapa precisa ser inicializado aqui dentro)
+        const map = L.map('map').setView([-19.9208, -44.0542], 13);
+        let currentMapLayer = null;
+        const markers = {};
+        let activeMarker = null;
+        let devicesRef = null;
 
-    // ==================================================================
-    //        LÓGICA DE AUTENTICAÇÃO ATUALIZADA COM getRedirectResult
-    // ==================================================================
+        // URLs das camadas de mapa
+        const lightMapUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        const lightMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+        const darkMapUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        const darkMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-    // PRIMEIRO: Verifica se estamos voltando de um redirect
-    auth.getRedirectResult()
-      .then((result) => {
-        if (result.user) {
-          // O usuário acabou de fazer login via redirect.
-          // O onAuthStateChanged vai lidar com a atualização da UI.
-          console.log("Login via redirect concluído para:", result.user.email);
+        // --- CÓDIGO DO TEMA ---
+        function updateMapTheme(theme) {
+            if (currentMapLayer) { map.removeLayer(currentMapLayer); }
+            let newUrl = lightMapUrl; let newAttribution = lightMapAttribution;
+            if (theme === 'dark') { newUrl = darkMapUrl; newAttribution = darkMapAttribution; }
+            currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
+        }
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark') {
+            bodyElement.classList.add('dark-theme');
+            if(themeToggleButton) themeToggleButton.textContent = '☀️';
         } else {
-          // Não estamos voltando de um redirect, ou o usuário não logou.
-          console.log("Nenhum resultado de redirect detectado.");
+             if(themeToggleButton) themeToggleButton.textContent = '🌓';
         }
-      }).catch((error) => {
-        // Lida com erros específicos do redirect (raro, mas bom ter)
-        console.error("Erro ao processar redirect result:", error);
-        handleAuthError(error); // Usa nossa função de erro
-      });
+        if (themeToggleButton) {
+            themeToggleButton.onclick = () => {
+                bodyElement.classList.toggle('dark-theme');
+                let theme = 'light';
+                if (bodyElement.classList.contains('dark-theme')) {
+                    theme = 'dark'; themeToggleButton.textContent = '☀️';
+                } else { themeToggleButton.textContent = '🌓'; }
+                localStorage.setItem('theme', theme);
+                updateMapTheme(theme);
+            };
+        }
+        // --- FIM CÓDIGO DO TEMA ---
 
-    // SEGUNDO: O ouvinte principal que reage a QUALQUER mudança de estado
-    auth.onAuthStateChanged((user) => {
-        console.log("onAuthStateChanged disparado. User:", user ? user.uid : "null"); // Log para depuração
-        if (user) {
-            // ----- USUÁRIO ESTÁ LOGADO -----
-            // (Esta parte continua a mesma)
-            contentContainer.style.display = 'block';
-            loginContainer.style.display = 'none';
-            userEmailElement.textContent = `Logado como: ${user.email}`;
-            loginErrorMessage.textContent = "";
-            document.getElementById('user-uid-display').textContent = user.uid;
-            updateMapTheme(localStorage.getItem('theme') || 'light');
-            map.invalidateSize();
-            const userUid = user.uid;
-            const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
-            devicesRef = database.ref(userDevicesPath);
-            startDatabaseListener(devicesRef);
+        // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO ---
+        if (googleLoginButton) { // Boa prática verificar se o botão existe
+            googleLoginButton.onclick = () => {
+                console.log(">>> Botão 'Entrar com Google' CLICADO!");
+                try {
+                    console.log(">>> Tentando chamar signInWithRedirect...");
+                    auth.signInWithRedirect(provider);
+                    console.log(">>> signInWithRedirect chamado com sucesso.");
+                } catch (error) {
+                     console.error(">>> ERRO ao chamar signInWithRedirect:", error);
+                     handleAuthError(error);
+                }
+            };
         } else {
-            // ----- USUÁRIO ESTÁ DESLOGADO -----
-            // (Esta parte continua a mesma)
-            contentContainer.style.display = 'none';
-            loginContainer.style.display = 'block';
-            if (devicesRef) { devicesRef.off(); }
-            clearDashboardAndMap();
-            if (currentMapLayer) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
+             console.error("ERRO CRÍTICO: Botão Google Login não encontrado!");
         }
-    });
-    // --- FUNÇÕES DO DASHBOARD (clearDashboardAndMap, updateDashboard, etc.) ---
-    function clearDashboardAndMap() {
-        updateDashboard(null); roomPanel.innerHTML = '';
-        for (const markerId in markers) { map.removeLayer(markers[markerId]); delete markers[markerId]; }
-        if (activeMarker) { activeMarker = null; }
-    }
-    function updateDashboard(data, deviceId) {
-        const ppmElement = document.getElementById('current-ppm');
-        const statusElement = document.getElementById('current-status');
-        const deviceIdElement = document.getElementById('current-device-id');
-        if (!data) {
-            ppmElement.textContent = "--"; statusElement.textContent = "--";
-            deviceIdElement.textContent = "Selecione um dispositivo no mapa ou painel"; return;
-        }
-        deviceIdElement.textContent = `Mostrando dados do: ${deviceId}`;
-        const ppm = data.ppm; ppmElement.textContent = ppm; statusElement.className = "value";
-        if (ppm < 50) { statusElement.textContent = "Seguro"; statusElement.classList.add('status-safe'); }
-        else if (ppm < 100) { statusElement.textContent = "Atenção"; statusElement.classList.add('status-warning'); }
-        else { statusElement.textContent = "Perigo"; statusElement.classList.add('status-danger'); }
-    }
-    function highlightDevice(deviceId, deviceData) {
-        if (activeMarker) { activeMarker.setStyle(activeMarker.styleNormal); }
-        activeMarker = markers[deviceId];
-        const ppm = deviceData.ppm; let color = '#28a745';
-        if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
-        const styleSelected = { radius: 10, fillOpacity: 1, stroke: true, weight: 3, color: '#fff', fillColor: color };
-        activeMarker.setStyle(styleSelected);
-        map.setView([deviceData.lat, deviceData.lng], 17);
-        updateDashboard(deviceData, deviceId);
-        activeMarker.openPopup();
-    }
-    function updateMapMarker(id, data) {
-        const { lat, lng, ppm } = data; let color = '#28a745';
-        if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
-        const styleNormal = { radius: 8, fillOpacity: 0.8, stroke: false, fillColor: color };
-        if (!markers[id]) { markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map); }
-        markers[id].setStyle(styleNormal); markers[id].styleNormal = styleNormal; 
-        const popupContent = `<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`;
-        markers[id].bindPopup(popupContent);
-        markers[id].off('click').on('click', () => { highlightDevice(id, data); });
-    }
-    function updateRoomPanel(deviceId, deviceData) {
-     const ppm = deviceData.ppm;
-     const card = document.createElement('div');
-     card.className = 'room-card';
-     
-     let statusClass = 'status-safe';
-     if (ppm >= 100) statusClass = 'status-danger';
-     else if (ppm >= 50) statusClass = 'status-warning';
-     card.classList.add(statusClass);
-     
-     // Conteúdo do card (igual a antes)
-     card.innerHTML = `
-         <h3>${deviceId}</h3>
-         <p>${ppm} PPM</p>
-     `;
-     
-     // --- NOVO CÓDIGO DO BOTÃO ---
-     const removeButton = document.createElement('button');
-     removeButton.className = 'remove-btn';
-     removeButton.textContent = 'X'; // O texto do botão
-     removeButton.title = `Remover ${deviceId}`; // Dica ao passar o mouse
-     
-     // Adiciona o evento de clique ao botão de remover
-     removeButton.addEventListener('click', (event) => {
-         event.stopPropagation(); // Impede que o clique no botão ative o clique no card
-         removeDevice(deviceId); // Chama a função para remover o dispositivo
-     });
-     
-     card.appendChild(removeButton); // Adiciona o botão ao card
-     // --- FIM DO NOVO CÓDIGO ---
 
-     // Adiciona o clique ao card (igual a antes)
-     card.addEventListener('click', () => {
-         highlightDevice(deviceId, deviceData);
-     });
-     
-     roomPanel.appendChild(card);
- }
-    // ============================================= //
- //     NOVA FUNÇÃO PARA REMOVER DISPOSITIVO      //
- // ============================================= //
- function removeDevice(deviceId) {
-     // Pede confirmação ao usuário
-     if (confirm(`Tem certeza que deseja remover o dispositivo "${deviceId}"? Esta ação não pode ser desfeita.`)) {
-         
-         const user = auth.currentUser; // Pega o usuário logado
-         if (user) {
-             const userUid = user.uid;
-             const devicePath = `dispositivos_por_usuario/${userUid}/${deviceId}`;
-             
-             console.log("Removendo dispositivo no caminho:", devicePath);
-             
-             // Pega a referência do dispositivo no Firebase e remove
-             database.ref(devicePath).remove()
-                 .then(() => {
-                     console.log(`Dispositivo "${deviceId}" removido com sucesso.`);
-                     // O listener do Firebase vai atualizar a interface automaticamente
-                 })
-                 .catch((error) => {
-                     console.error(`Erro ao remover dispositivo "${deviceId}":`, error);
-                     alert(`Não foi possível remover o dispositivo. Erro: ${error.message}`);
-                 });
-         } else {
-             console.error("Erro: Usuário não está logado para remover dispositivo.");
-             alert("Erro: Você não está logado. Faça login novamente.");
-         }
-     }
- }
+        if (loginEmailButton) {
+            loginEmailButton.onclick = () => {
+                const email = loginEmailInput.value; const password = loginPasswordInput.value;
+                if (!email || !password) { loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
+                auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
+            };
+        }
+        if (registerEmailButton) {
+            registerEmailButton.onclick = () => {
+                const email = loginEmailInput.value; const password = loginPasswordInput.value;
+                if (!email || !password) { loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(cred => console.log("Conta criada:", cred.user))
+                    .catch(handleAuthError);
+            };
+        }
+        if (logoutButton) {
+            logoutButton.onclick = () => { auth.signOut(); };
+        }
+        function handleAuthError(error) {
+            let message = ""; console.warn("Erro Auth:", error.code);
+            switch (error.code) { /* ... cases de erro ... */ }
+            if(loginErrorMessage) loginErrorMessage.textContent = message; // Verifica se existe
+        }
+
+        // ==================================================================
+        //        LÓGICA DE AUTENTICAÇÃO COM getRedirectResult
+        // ==================================================================
+        auth.getRedirectResult()
+          .then((result) => {
+            if (result.user) { console.log("Login via redirect concluído para:", result.user.email); }
+            else { console.log("Nenhum resultado de redirect detectado."); }
+          }).catch((error) => {
+            console.error("Erro ao processar redirect result:", error);
+            handleAuthError(error);
+          });
+
+        auth.onAuthStateChanged((user) => {
+            console.log("onAuthStateChanged disparado. User:", user ? user.uid : "null");
+            if (user) {
+                // ----- USUÁRIO LOGADO -----
+                if(contentContainer) contentContainer.style.display = 'block';
+                if(loginContainer) loginContainer.style.display = 'none';
+                if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
+                if(loginErrorMessage) loginErrorMessage.textContent = "";
+                if(document.getElementById('user-uid-display')) document.getElementById('user-uid-display').textContent = user.uid;
+
+                updateMapTheme(localStorage.getItem('theme') || 'light');
+                if (map) map.invalidateSize(); // Verifica se o mapa existe
+
+                const userUid = user.uid;
+                const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
+                devicesRef = database.ref(userDevicesPath);
+                startDatabaseListener(devicesRef);
+            } else {
+                // ----- USUÁRIO DESLOGADO -----
+                if(contentContainer) contentContainer.style.display = 'none';
+                if(loginContainer) loginContainer.style.display = 'block';
+                if (devicesRef) { devicesRef.off(); }
+                clearDashboardAndMap();
+                if (currentMapLayer && map) { map.removeLayer(currentMapLayer); currentMapLayer = null; } // Verifica o mapa
+            }
+        });
+
+        // --- FUNÇÕES DO DASHBOARD ---
+        function startDatabaseListener(ref) {
+            ref.on('value', (snapshot) => {
+                // ... lógica do listener ...
+            }, (error) => {
+                 console.error(">>> ERRO no listener:", error);
+            });
+        }
+        function clearDashboardAndMap() {
+            updateDashboard(null); if(roomPanel) roomPanel.innerHTML = '';
+            for (const markerId in markers) { if(map) map.removeLayer(markers[markerId]); delete markers[markerId]; }
+            if (activeMarker) { activeMarker = null; }
+        }
+        function updateDashboard(data, deviceId) {
+             const ppmElement = document.getElementById('current-ppm');
+             const statusElement = document.getElementById('current-status');
+             const deviceIdElement = document.getElementById('current-device-id');
+             // Adicionar verificações if(ppmElement), if(statusElement) etc. aqui
+             if (!data) { /* ... */ } else { /* ... */ }
+        }
+        function highlightDevice(deviceId, deviceData) {
+            if (activeMarker) { activeMarker.setStyle(activeMarker.styleNormal); }
+            activeMarker = markers[deviceId];
+            // ... resto da lógica ...
+            if(map) map.setView([deviceData.lat, deviceData.lng], 17);
+             // ...
+             if(activeMarker) activeMarker.openPopup();
+        }
+        function updateMapMarker(id, data) {
+             // ... lógica de criar marcador ...
+             if(!markers[id] && map) { // Verifica se o mapa existe
+                 markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map);
+             }
+             // ... resto da lógica ...
+             if(markers[id]) { // Verifica se o marcador existe
+                 markers[id].off('click').on('click', () => { highlightDevice(id, data); });
+             }
+        }
+        function updateRoomPanel(deviceId, deviceData) {
+            // ... lógica de criar card ...
+            if(removeButton) {
+                removeButton.addEventListener('click', (event) => { /* ... */ });
+            }
+            if(card) {
+                card.addEventListener('click', () => { highlightDevice(deviceId, deviceData); });
+            }
+            if(roomPanel) roomPanel.appendChild(card); // Verifica se existe
+        }
+        function removeDevice(deviceId) {
+            if (confirm(`Remover "${deviceId}"?`)) {
+                const user = auth.currentUser;
+                if (user) {
+                    const userUid = user.uid;
+                    const devicePath = `dispositivos_por_usuario/${userUid}/${deviceId}`;
+                    database.ref(devicePath).remove()
+                        .then(() => console.log(`Removido: ${deviceId}`))
+                        .catch((error) => console.error(`Erro ao remover ${deviceId}:`, error));
+                }
+            }
+        }
+
+    }); // --- FIM DO 'DOMContentLoaded' ---
+
 </script>
 
 </body>
