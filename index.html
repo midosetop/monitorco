@@ -37,6 +37,30 @@
         .room-card.status-danger p { color: #dc3545; }
         @keyframes pulse-danger { 0% { background-color: #fff0f1; } 50% { background-color: #ffe0e3; } 100% { background-color: #fff0f1; } }
 
+       
+
+/* ================================================== */
+/* COLE ESTE NOVO CSS AQUI                  */
+/* ================================================== */
+#user-info-card {
+    background-color: #e9ecef;
+    border: 2px dashed #6c757d;
+    text-align: left;
+}
+#user-info-card p {
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+#user-uid-display {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 1.1em;
+    color: #c7254e;
+    word-wrap: break-word; /* Para quebrar o ID se a tela for pequena */
+}
         /* ======================================================= */
         /* ESTILOS ATUALIZADOS PARA O LOGIN                 */
         /* ======================================================= */
@@ -131,19 +155,27 @@
     </div>
 
     <div class="dashboard">
-        <h1>Monitoramento de Monóxido de Carbono</h1>
-        <h3 id="current-device-id">Selecione um dispositivo no mapa ou painel</h3>
-        <div class="card-container">
-            <div class="card">
-                <h2>Nível Atual (PPM)</h2>
-                <p class="value" id="current-ppm">--</p>
-            </div>
-            <div class="card">
-                <h2>Status</h2>
-                <p class="value" id="current-status">--</p>
-            </div>
+    <h1>Monitoramento de Monóxido de Carbono</h1>
+    <h3 id="current-device-id">Selecione um dispositivo no mapa ou painel</h3>
+    <div class="card-container">
+        
+        <div class="card">
+            <h2>Nível Atual (PPM)</h2>
+            <p class="value" id="current-ppm">--</p>
         </div>
-    </div>
+        
+        <div class="card">
+            <h2>Status</h2>
+            <p class="value" id="current-status">--</p>
+        </div>
+
+        <div class="card" id="user-info-card">
+            <h2>Seu ID de Usuário</h2>
+            <p>Para adicionar um novo dispositivo, use este ID no portal de configuração:</p>
+            <code id="user-uid-display">Carregando...</code>
+        </div>
+        </div>
+</div>
 
     <div class="room-panel-container">
         <h2>Painel de Status dos Dispositivos</h2>
@@ -288,6 +320,7 @@
             loginContainer.style.display = 'none';
             userEmailElement.textContent = `Logado como: ${user.email}`;
             loginErrorMessage.textContent = ""; // Limpa erros antigos
+            document.getElementById('user-uid-display').textContent = user.uid;
 
             map.invalidateSize();
 
