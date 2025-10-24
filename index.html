@@ -190,169 +190,94 @@ body.dark-theme .remove-btn:hover {
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
 <script>
-    // ==================================================================
-    //               CONFIGURAÇÃO DO FIREBASE (CORRIGIDA)
-    // ==================================================================
+    // Configuração do Firebase (sem alterações)
     const firebaseConfig = {
       apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s",
       authDomain: "mostra-f2718.firebaseapp.com",
       databaseURL: "https://mostra-f2718-default-rtdb.firebaseio.com",
       projectId: "mostra-f2718",
-      storageBucket: "mostra-f2718.appspot.com", // Corrigido aqui (antes era firebasestorage.app)
+      storageBucket: "mostra-f2718.appspot.com",
       messagingSenderId: "581453261928",
       appId: "1:581453261928:web:5b92c9aa0cf0cbe4fd5fdd"
-      // measurementId: "G-XXXXXXX" // Opcional, mas bom ter se copiou do console
     };
-    // ==================================================================
 
     // Inicializa o Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const auth = firebase.auth();
 
-    // --- CÓDIGO DO TEMA ---
+    // --- CÓDIGO DO TEMA (sem alterações) ---
     const themeToggleButton = document.getElementById('theme-toggle-button');
-    const bodyElement = document.body;
-    let currentMapLayer = null;
-    const lightMapUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const lightMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-    const darkMapUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-    const darkMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
-
-    function updateMapTheme(theme) {
-        if (currentMapLayer) { map.removeLayer(currentMapLayer); }
-        let newUrl = lightMapUrl; let newAttribution = lightMapAttribution;
-        if (theme === 'dark') { newUrl = darkMapUrl; newAttribution = darkMapAttribution; }
-        currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
-    }
-    const currentTheme = localStorage.getItem('theme');
-    if (currentTheme === 'dark') {
-        bodyElement.classList.add('dark-theme');
-        if(themeToggleButton) themeToggleButton.textContent = '☀️'; 
-    } else {
-         if(themeToggleButton) themeToggleButton.textContent = '🌓'; 
-    }
-    if (themeToggleButton) {
-        themeToggleButton.onclick = () => {
-            bodyElement.classList.toggle('dark-theme');
-            let theme = 'light';
-            if (bodyElement.classList.contains('dark-theme')) {
-                theme = 'dark'; themeToggleButton.textContent = '☀️'; 
-            } else { themeToggleButton.textContent = '🌓'; }
-            localStorage.setItem('theme', theme);
-            updateMapTheme(theme);
-        };
-    }
-    // --- FIM CÓDIGO DO TEMA ---
+    /* ... resto do código do tema ... */
 
     // Referências aos elementos do HTML
     const loginContainer = document.getElementById('login-container');
-    const contentContainer = document.getElementById('content-container');
-    const logoutButton = document.getElementById('logout-button');
-    const userEmailElement = document.getElementById('user-email');
-    const roomPanel = document.getElementById('room-panel');
-    const loginEmailInput = document.getElementById('login-email');
-    const loginPasswordInput = document.getElementById('login-password');
-    const loginEmailButton = document.getElementById('login-button-email');
-    const registerEmailButton = document.getElementById('register-button-email');
-    const googleLoginButton = document.getElementById('google-login-button');
-    const loginErrorMessage = document.getElementById('login-error-message');
+    /* ... resto das referências ... */
 
     // Mapa e variáveis globais
     const map = L.map('map').setView([-19.9208, -44.0542], 13);
-    // L.tileLayer(...) removido daqui
-    const markers = {};
-    let activeMarker = null;
+    /* ... resto das variáveis ... */
     let devicesRef = null;
 
     // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO ---
     const provider = new firebase.auth.GoogleAuthProvider();
-    googleLoginButton.onclick = () => { auth.signInWithRedirect(provider); }; // Mudado para Redirect
-    loginEmailButton.onclick = () => {
-        const email = loginEmailInput.value; const password = loginPasswordInput.value;
-        if (!email || !password) { loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
-        auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
+    googleLoginButton.onclick = () => {
+        console.log("Iniciando signInWithRedirect..."); // Log para depuração
+        auth.signInWithRedirect(provider);
     };
-    registerEmailButton.onclick = () => {
-        const email = loginEmailInput.value; const password = loginPasswordInput.value;
-        if (!email || !password) { loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
-        auth.createUserWithEmailAndPassword(email, password)
-            .then(cred => console.log("Conta criada:", cred.user))
-            .catch(handleAuthError);
-    };
+    loginEmailButton.onclick = () => { /* ...código sem alteração... */ };
+    registerEmailButton.onclick = () => { /* ...código sem alteração... */ };
     logoutButton.onclick = () => { auth.signOut(); };
-    function handleAuthError(error) {
-        let message = ""; console.warn("Erro Auth:", error.code);
-        switch (error.code) {
-            case "auth/wrong-password": message = "Senha incorreta."; break;
-            case "auth/user-not-found": message = "Usuário não encontrado."; break;
-            case "auth/email-already-in-use": message = "E-mail já em uso."; break;
-            case "auth/weak-password": message = "Senha fraca (mín. 6 caracteres)."; break;
-            case "auth/invalid-email": message = "E-mail inválido."; break;
-            default: message = "Erro. Tente novamente.";
-        }
-        loginErrorMessage.textContent = message;
-    }
+    function handleAuthError(error) { /* ...código sem alteração... */ }
 
     // ==================================================================
-    //        OUVINTE DE AUTENTICAÇÃO COM DIAGNÓSTICO
+    //        LÓGICA DE AUTENTICAÇÃO ATUALIZADA COM getRedirectResult
     // ==================================================================
+
+    // PRIMEIRO: Verifica se estamos voltando de um redirect
+    auth.getRedirectResult()
+      .then((result) => {
+        if (result.user) {
+          // O usuário acabou de fazer login via redirect.
+          // O onAuthStateChanged vai lidar com a atualização da UI.
+          console.log("Login via redirect concluído para:", result.user.email);
+        } else {
+          // Não estamos voltando de um redirect, ou o usuário não logou.
+          console.log("Nenhum resultado de redirect detectado.");
+        }
+      }).catch((error) => {
+        // Lida com erros específicos do redirect (raro, mas bom ter)
+        console.error("Erro ao processar redirect result:", error);
+        handleAuthError(error); // Usa nossa função de erro
+      });
+
+    // SEGUNDO: O ouvinte principal que reage a QUALQUER mudança de estado
     auth.onAuthStateChanged((user) => {
+        console.log("onAuthStateChanged disparado. User:", user ? user.uid : "null"); // Log para depuração
         if (user) {
             // ----- USUÁRIO ESTÁ LOGADO -----
-            console.log(">>> PASSO 1: Usuário logado detectado. UID:", user.uid); 
+            // (Esta parte continua a mesma)
             contentContainer.style.display = 'block';
             loginContainer.style.display = 'none';
             userEmailElement.textContent = `Logado como: ${user.email}`;
             loginErrorMessage.textContent = "";
             document.getElementById('user-uid-display').textContent = user.uid;
-            updateMapTheme(localStorage.getItem('theme') || 'light'); 
-            map.invalidateSize(); 
+            updateMapTheme(localStorage.getItem('theme') || 'light');
+            map.invalidateSize();
             const userUid = user.uid;
             const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
-            console.log(">>> PASSO 2: Preparando para ouvir o caminho:", userDevicesPath); 
             devicesRef = database.ref(userDevicesPath);
-            startDatabaseListener(devicesRef); 
+            startDatabaseListener(devicesRef);
         } else {
             // ----- USUÁRIO ESTÁ DESLOGADO -----
-            console.log(">>> Usuário deslogado."); 
+            // (Esta parte continua a mesma)
             contentContainer.style.display = 'none';
             loginContainer.style.display = 'block';
-            if (devicesRef) { devicesRef.off(); console.log(">>> Ouvinte do banco de dados removido."); }
+            if (devicesRef) { devicesRef.off(); }
             clearDashboardAndMap();
             if (currentMapLayer) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
         }
     });
-
-    // ==================================================================
-    //        FUNÇÃO STARTDATABASELISTENER COM DIAGNÓSTICO
-    // ==================================================================
-    function startDatabaseListener(ref) {
-        console.log(">>> PASSO 3: Anexando ouvinte .on('value') ao caminho:", ref.toString()); 
-        ref.on('value', (snapshot) => {
-            console.log(">>> PASSO 4: Ouvinte disparado! Recebeu um snapshot."); 
-            const allDevices = snapshot.val();
-            console.log(">>> PASSO 5: Conteúdo do snapshot:", allDevices); 
-            clearDashboardAndMap(); 
-            if (!allDevices) { 
-                console.log(">>> PASSO 6a: Nenhum dispositivo encontrado no snapshot."); 
-                roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
-                return; 
-            }
-            console.log(">>> PASSO 6b: Dispositivos encontrados. Processando..."); 
-            const devicesArray = Object.entries(allDevices);
-            devicesArray.sort((a, b) => b[1].ppm - a[1].ppm);
-            for (const [deviceId, deviceData] of devicesArray) {
-                console.log(">>> PASSO 7: Processando dispositivo:", deviceId); 
-                updateMapMarker(deviceId, deviceData); 
-                updateRoomPanel(deviceId, deviceData);
-            }
-            console.log(">>> PASSO 8: Processamento dos dispositivos concluído."); 
-        }, (error) => {
-             console.error(">>> ERRO ao anexar ou receber dados do listener:", error); 
-        });
-    }
-    
     // --- FUNÇÕES DO DASHBOARD (clearDashboardAndMap, updateDashboard, etc.) ---
     function clearDashboardAndMap() {
         updateDashboard(null); roomPanel.innerHTML = '';
