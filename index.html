@@ -87,7 +87,47 @@
         body.dark-theme .login-form input::placeholder { color: #888; }
         body.dark-theme .divider { color: #aaa; }
         body.dark-theme #logout-container span { color: #e0e0e0; } /* Ajuste cor do email no logout dark - CORRIGIDO */
+        /* ... seu CSS existente ... */
 
+/* ============================================= */
+/* ESTILO DO BOTÃO DE REMOVER              */
+/* ============================================= */
+.room-card {
+    position: relative; /* Necessário para posicionar o botão dentro */
+    /* ... outros estilos do room-card ... */
+}
+
+.remove-btn {
+    position: absolute; /* Posicionamento absoluto dentro do card */
+    top: 5px;
+    right: 5px;
+    background-color: #dc3545; /* Cor vermelha de perigo */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Faz o botão redondo */
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 18px; /* Centraliza o 'X' verticalmente */
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.7; /* Começa um pouco transparente */
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.remove-btn:hover {
+    background-color: #c82333; /* Vermelho mais escuro no hover */
+    opacity: 1; /* Fica opaco no hover */
+}
+
+/* Ajuste no tema escuro */
+body.dark-theme .remove-btn {
+    background-color: #a02a33;
+}
+body.dark-theme .remove-btn:hover {
+    background-color: #c82333;
+}
     </style>
 </head>
 <body>
@@ -355,13 +395,73 @@
         markers[id].off('click').on('click', () => { highlightDevice(id, data); });
     }
     function updateRoomPanel(deviceId, deviceData) {
-        const ppm = deviceData.ppm; const card = document.createElement('div'); card.className = 'room-card';
-        let statusClass = 'status-safe'; if (ppm >= 100) statusClass = 'status-danger'; else if (ppm >= 50) statusClass = 'status-warning';
-        card.classList.add(statusClass);
-        card.innerHTML = `<h3>${deviceId}</h3><p>${ppm} PPM</p>`;
-        card.addEventListener('click', () => { highlightDevice(deviceId, deviceData); });
-        roomPanel.appendChild(card);
-    }
+     const ppm = deviceData.ppm;
+     const card = document.createElement('div');
+     card.className = 'room-card';
+     
+     let statusClass = 'status-safe';
+     if (ppm >= 100) statusClass = 'status-danger';
+     else if (ppm >= 50) statusClass = 'status-warning';
+     card.classList.add(statusClass);
+     
+     // Conteúdo do card (igual a antes)
+     card.innerHTML = `
+         <h3>${deviceId}</h3>
+         <p>${ppm} PPM</p>
+     `;
+     
+     // --- NOVO CÓDIGO DO BOTÃO ---
+     const removeButton = document.createElement('button');
+     removeButton.className = 'remove-btn';
+     removeButton.textContent = 'X'; // O texto do botão
+     removeButton.title = `Remover ${deviceId}`; // Dica ao passar o mouse
+     
+     // Adiciona o evento de clique ao botão de remover
+     removeButton.addEventListener('click', (event) => {
+         event.stopPropagation(); // Impede que o clique no botão ative o clique no card
+         removeDevice(deviceId); // Chama a função para remover o dispositivo
+     });
+     
+     card.appendChild(removeButton); // Adiciona o botão ao card
+     // --- FIM DO NOVO CÓDIGO ---
+
+     // Adiciona o clique ao card (igual a antes)
+     card.addEventListener('click', () => {
+         highlightDevice(deviceId, deviceData);
+     });
+     
+     roomPanel.appendChild(card);
+ }
+    // ============================================= //
+ //     NOVA FUNÇÃO PARA REMOVER DISPOSITIVO      //
+ // ============================================= //
+ function removeDevice(deviceId) {
+     // Pede confirmação ao usuário
+     if (confirm(`Tem certeza que deseja remover o dispositivo "${deviceId}"? Esta ação não pode ser desfeita.`)) {
+         
+         const user = auth.currentUser; // Pega o usuário logado
+         if (user) {
+             const userUid = user.uid;
+             const devicePath = `dispositivos_por_usuario/${userUid}/${deviceId}`;
+             
+             console.log("Removendo dispositivo no caminho:", devicePath);
+             
+             // Pega a referência do dispositivo no Firebase e remove
+             database.ref(devicePath).remove()
+                 .then(() => {
+                     console.log(`Dispositivo "${deviceId}" removido com sucesso.`);
+                     // O listener do Firebase vai atualizar a interface automaticamente
+                 })
+                 .catch((error) => {
+                     console.error(`Erro ao remover dispositivo "${deviceId}":`, error);
+                     alert(`Não foi possível remover o dispositivo. Erro: ${error.message}`);
+                 });
+         } else {
+             console.error("Erro: Usuário não está logado para remover dispositivo.");
+             alert("Erro: Você não está logado. Faça login novamente.");
+         }
+     }
+ }
 </script>
 
 </body>
