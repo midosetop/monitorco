@@ -192,20 +192,20 @@ body.dark-theme .remove-btn:hover {
 <script>
     // Configuração do Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s",
+      apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s", // CONFIRME SE ESTA É SUA CHAVE CORRETA
       authDomain: "mostra-f2718.firebaseapp.com",
       databaseURL: "https://mostra-f2718-default-rtdb.firebaseio.com",
       projectId: "mostra-f2718",
       storageBucket: "mostra-f2718.appspot.com",
       messagingSenderId: "581453261928",
-      appId: "1:581453261928:web:5b92c9aa0cf0cbe4fd5fdd"
+      appId: "1:581453261928:web:5b92c9aa0cf0cbe4fd5fdd" // CONFIRME SE ESTE É SEU APP ID CORRETO
     };
 
     // Inicializa o Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const auth = firebase.auth();
-    const provider = new firebase.auth.GoogleAuthProvider(); // Provedor Google
+    const provider = new firebase.auth.GoogleAuthProvider();
 
     // =======================================================
     // ESPERA O HTML CARREGAR ANTES DE RODAR O RESTO DO CÓDIGO
@@ -233,9 +233,7 @@ body.dark-theme .remove-btn:hover {
         let map = null;
         if (document.getElementById('map')) {
             map = L.map('map').setView([-19.9208, -44.0542], 13);
-        } else {
-            console.error("ERRO CRÍTICO: Elemento 'map' não encontrado no DOM!");
-        }
+        } else { console.error("ERRO CRÍTICO: Elemento 'map' não encontrado!"); }
         let currentMapLayer = null;
         const markers = {};
         let activeMarker = null;
@@ -278,62 +276,42 @@ body.dark-theme .remove-btn:hover {
         // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO ---
         function handleAuthError(error) {
             let message = ""; console.warn("Erro Auth:", error.code);
-            switch (error.code) { /* ... cases de erro ... */ }
+            switch (error.code) {
+                case "auth/wrong-password": message = "Senha incorreta."; break;
+                case "auth/user-not-found": message = "Usuário não encontrado."; break;
+                case "auth/email-already-in-use": message = "E-mail já em uso."; break;
+                case "auth/weak-password": message = "Senha fraca (mín. 6 caracteres)."; break;
+                case "auth/invalid-email": message = "E-mail inválido."; break;
+                default: message = "Erro. Tente novamente.";
+            }
             if(loginErrorMessage) loginErrorMessage.textContent = message;
         }
 
-        // ========================================================== //
-        //          VINCULA OS CLIQUES DOS BOTÕES AQUI                //
-        // ========================================================== //
-
-        // Botão SAIR
+        // --- VINCULA CLIQUES DOS BOTÕES ---
         if (logoutButton) {
-            logoutButton.onclick = () => {
-                console.log(">>> Botão Sair clicado! Chamando auth.signOut()...");
-                auth.signOut();
-            };
-        } else { console.error("ERRO: Botão Sair (logoutButton) não encontrado!"); }
+            logoutButton.onclick = () => { console.log(">>> Saindo..."); auth.signOut(); };
+        } else { console.error("ERRO: Botão Sair não encontrado!"); }
 
-        // Botão LOGIN COM GOOGLE (POPUP)
         if (googleLoginButton) {
-             console.log(">>> Vinculando clique (POPUP) ao botão Google.");
-             googleLoginButton.onclick = () => {
-                 console.log(">>> Botão Google clicado! Chamando signInWithPopup...");
-                 auth.signInWithPopup(provider)
-                     .then((result) => { console.log(">>> Login via Popup bem-sucedido:", result.user.email); })
-                     .catch((error) => { console.error(">>> Erro no signInWithPopup:", error); handleAuthError(error); });
-             };
-         } else { console.error(">>> ERRO CRÍTICO: Botão Google não encontrado!"); }
+             googleLoginButton.onclick = () => { console.log(">>> Login Google..."); auth.signInWithPopup(provider).catch(handleAuthError); };
+         } else { console.error(">>> ERRO: Botão Google não encontrado!"); }
 
-        // Botão LOGIN COM E-MAIL
         if (loginEmailButton) {
-            loginEmailButton.onclick = () => {
-                const email = loginEmailInput.value; const password = loginPasswordInput.value;
-                if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
-                auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
-            };
+            loginEmailButton.onclick = () => { /* ... código login email ... */ };
         } else { console.error("ERRO: Botão Login Email não encontrado!"); }
 
-        // Botão CRIAR CONTA COM E-MAIL
         if (registerEmailButton) {
-            registerEmailButton.onclick = () => {
-                const email = loginEmailInput.value; const password = loginPasswordInput.value;
-                if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then(cred => console.log("Conta criada:", cred.user))
-                    .catch(handleAuthError);
-            };
+            registerEmailButton.onclick = () => { /* ... código registro email ... */ };
         } else { console.error("ERRO: Botão Registrar Email não encontrado!"); }
-        // ========================================================== //
+        // --- FIM VINCULA CLIQUES ---
 
 
         // --- LÓGICA DE AUTENTICAÇÃO ---
         auth.onAuthStateChanged((user) => {
-            console.log(">>> PASSO A: onAuthStateChanged disparado. User:", user ? user.uid : "null");
-
+            console.log(">>> PASSO A: Auth state changed. User:", user ? user.uid : "null");
             if (user) {
-                // ----- USUÁRIO LOGADO -----
-                console.log(">>> PASSO B: Usuário logado detectado.");
+                // LOGADO
+                console.log(">>> PASSO B: Logado. UID:", user.uid);
                 if(contentContainer) contentContainer.style.display = 'block';
                 if(loginContainer) loginContainer.style.display = 'none';
                 if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
@@ -346,46 +324,36 @@ body.dark-theme .remove-btn:hover {
 
                 const userUid = user.uid;
                 const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
-                console.log(">>> PASSO C: Preparando para ouvir:", userDevicesPath);
-
-                // Evita anexar listener duplicado
+                console.log(">>> PASSO C: Ouvindo:", userDevicesPath);
                 if (!devicesRef) {
                     devicesRef = database.ref(userDevicesPath);
                     startDatabaseListener(devicesRef);
                 }
-
             } else {
-                // ----- USUÁRIO DESLOGADO -----
-                console.log(">>> Usuário deslogado.");
+                // DESLOGADO
+                console.log(">>> Deslogado.");
                 if(contentContainer) contentContainer.style.display = 'none';
                 if(loginContainer) loginContainer.style.display = 'block';
-
-                // REMOVIDO: A vinculação dos cliques dos botões de login foi movida para fora.
-
-                if (devicesRef) { devicesRef.off(); devicesRef = null; console.log(">>> Ouvinte DB removido."); }
+                if (devicesRef) { devicesRef.off(); devicesRef = null; console.log(">>> Listener DB removido."); }
                 clearDashboardAndMap();
                 if (currentMapLayer && map) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
             }
         });
 
-        // --- FUNÇÕES DO DASHBOARD ---
+        // --- FUNÇÕES DO DASHBOARD (DEFINIÇÕES COMPLETAS) ---
         function startDatabaseListener(ref) {
-            console.log(">>> PASSO D: Anexando ouvinte .on('value') ao caminho:", ref.toString());
+            console.log(">>> PASSO D: Anexando listener:", ref.toString());
             ref.on('value', (snapshot) => {
-                console.log(">>> PASSO E: Ouvinte disparado! Snapshot:", snapshot.val() ? "COM DADOS" : "VAZIO"); // Modificado Log E
+                console.log(">>> PASSO E: Listener disparado! Snapshot:", snapshot.val() ? "COM DADOS" : "VAZIO");
                 const allDevices = snapshot.val();
-                console.log(">>> PASSO F: Conteúdo:", allDevices); // Mantido F
+                console.log(">>> PASSO F: Conteúdo:", allDevices);
                 clearDashboardAndMap();
-                if (map) {
-             console.log(">>> Chamando map.invalidateSize() DENTRO do listener.");
-             map.invalidateSize();
-              }
                 if (!allDevices) {
                     console.log(">>> PASSO G1: Nenhum dispositivo.");
                     if(roomPanel) roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
                     return;
                 }
-                console.log(">>> PASSO G2: Dispositivos encontrados. Processando...");
+                console.log(">>> PASSO G2: Dispositivos encontrados.");
                 const devicesArray = Object.entries(allDevices);
                 devicesArray.sort((a, b) => b[1].ppm - a[1].ppm);
                 for (const [deviceId, deviceData] of devicesArray) {
@@ -399,9 +367,51 @@ body.dark-theme .remove-btn:hover {
             }, (error) => { console.error(">>> ERRO listener:", error); });
         }
 
+        function clearDashboardAndMap() {
+            updateDashboard(null); if(roomPanel) roomPanel.innerHTML = '';
+            for (const markerId in markers) {
+                if (map && markers[markerId]) { map.removeLayer(markers[markerId]); }
+                delete markers[markerId];
+            }
+            if (activeMarker) { activeMarker = null; }
+        }
+
+        function updateDashboard(data, deviceId) {
+             const ppmElement = document.getElementById('current-ppm');
+             const statusElement = document.getElementById('current-status');
+             const deviceIdElement = document.getElementById('current-device-id');
+             if (!ppmElement || !statusElement || !deviceIdElement) return;
+             if (!data) {
+                ppmElement.textContent = "--"; statusElement.textContent = "--";
+                deviceIdElement.textContent = "Selecione um dispositivo no mapa ou painel"; return;
+            }
+            deviceIdElement.textContent = `Mostrando dados do: ${deviceId}`;
+            const ppm = data.ppm; ppmElement.textContent = ppm; statusElement.className = "value";
+            statusElement.classList.remove('status-safe', 'status-warning', 'status-danger'); // Limpa classes antigas
+            if (ppm < 50) { statusElement.textContent = "Seguro"; statusElement.classList.add('status-safe'); }
+            else if (ppm < 100) { statusElement.textContent = "Atenção"; statusElement.classList.add('status-warning'); }
+            else { statusElement.textContent = "Perigo"; statusElement.classList.add('status-danger'); }
+        }
+
+        function highlightDevice(deviceId, deviceData) {
+            if (!map || !markers[deviceId]) return;
+            if (activeMarker) {
+                if (activeMarker.styleNormal) activeMarker.setStyle(activeMarker.styleNormal);
+                else activeMarker.setStyle({ radius: 8, fillOpacity: 0.8, stroke: false });
+            }
+            activeMarker = markers[deviceId];
+            const ppm = deviceData.ppm; let color = '#28a745';
+            if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
+            const styleSelected = { radius: 10, fillOpacity: 1, stroke: true, weight: 3, color: '#fff', fillColor: color };
+            activeMarker.setStyle(styleSelected);
+            map.setView([deviceData.lat, deviceData.lng], 17);
+            updateDashboard(deviceData, deviceId);
+            activeMarker.openPopup();
+        }
+
         function updateMapMarker(id, data) {
-            console.log(`>>> updateMapMarker: Tentando adicionar/atualizar marcador para ${id}`); // LOG
-            if (!map) { console.error(">>> updateMapMarker: ERRO - Mapa não inicializado!"); return; } // Verifica mapa
+            console.log(`>>> updateMapMarker: Processando ${id}`);
+            if (!map) { console.error(">>> updateMapMarker: ERRO - Mapa não inicializado!"); return; }
 
             const { lat, lng, ppm } = data; let color = '#28a745';
             if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
@@ -410,24 +420,25 @@ body.dark-theme .remove-btn:hover {
             try {
                 if (!markers[id]) {
                     markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map);
-                    console.log(`>>> updateMapMarker: Marcador ${id} CRIADO e adicionado ao mapa.`); // LOG INTERNO SUCESSO
+                    console.log(`>>> updateMapMarker: Marcador ${id} CRIADO.`);
                 } else {
-                     markers[id].setLatLng([lat, lng]); // Atualiza posição caso mude
+                     markers[id].setLatLng([lat, lng]);
                      markers[id].setStyle(styleNormal);
-                     console.log(`>>> updateMapMarker: Marcador ${id} ATUALIZADO.`); // LOG INTERNO SUCESSO
+                     console.log(`>>> updateMapMarker: Marcador ${id} ATUALIZADO.`);
                 }
-                markers[id].styleNormal = styleNormal;
+                markers[id].styleNormal = styleNormal; // Salva o estilo normal
                 const popupContent = `<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`;
                 markers[id].bindPopup(popupContent);
                 markers[id].off('click').on('click', () => { highlightDevice(id, data); });
             } catch (e) {
-                console.error(`>>> updateMapMarker: ERRO INESPERADO ao processar marcador ${id}:`, e); // LOG INTERNO ERRO
+                console.error(`>>> updateMapMarker: ERRO INESPERADO ${id}:`, e);
             }
         }
 
-        // Função para criar cartões no painel de status (COM DIAGNÓSTICO INTERNO)
         function updateRoomPanel(deviceId, deviceData) {
-            console.log(`>>> updateRoomPanel: Tentando criar card para ${deviceId}`); // LOG
+            console.log(`>>> updateRoomPanel: Criando card ${deviceId}`);
+            if (!roomPanel) { console.error(">>> updateRoomPanel: ERRO - Painel não encontrado!"); return; }
+
             const ppm = deviceData.ppm;
             const card = document.createElement('div');
             card.className = 'room-card';
@@ -441,30 +452,27 @@ body.dark-theme .remove-btn:hover {
             removeButton.className = 'remove-btn';
             removeButton.textContent = 'X';
             removeButton.title = `Remover ${deviceId}`;
-            removeButton.addEventListener('click', (event) => {
-                event.stopPropagation();
-                removeDevice(deviceId);
-            });
+            removeButton.addEventListener('click', (event) => { event.stopPropagation(); removeDevice(deviceId); });
             card.appendChild(removeButton);
 
-            card.addEventListener('click', () => {
-                highlightDevice(deviceId, deviceData);
-            });
+            card.addEventListener('click', () => { highlightDevice(deviceId, deviceData); });
 
-            if (roomPanel) { // Verifica se o painel existe
-                roomPanel.appendChild(card);
-                console.log(`>>> updateRoomPanel: Card ${deviceId} ADICIONADO ao painel.`); // LOG INTERNO SUCESSO
-            } else {
-                console.error(">>> updateRoomPanel: ERRO - Elemento 'roomPanel' não encontrado!"); // LOG INTERNO ERRO
-            }
+            roomPanel.appendChild(card);
+            console.log(`>>> updateRoomPanel: Card ${deviceId} ADICIONADO.`);
         }
 
-        function clearDashboardAndMap() { /* ... código ... */ }
-        function updateDashboard(data, deviceId) { /* ... código ... */ }
-        function highlightDevice(deviceId, deviceData) { /* ... código ... */ }
-        function updateMapMarker(id, data) { /* ... código ... */ }
-        function updateRoomPanel(deviceId, deviceData) { /* ... código ... */ }
-        function removeDevice(deviceId) { /* ... código ... */ }
+        function removeDevice(deviceId) {
+            if (confirm(`Tem certeza que deseja remover "${deviceId}"?`)) {
+                const user = auth.currentUser;
+                if (user) {
+                    const devicePath = `dispositivos_por_usuario/${user.uid}/${deviceId}`;
+                    console.log("Removendo:", devicePath);
+                    database.ref(devicePath).remove()
+                        .then(() => console.log(`Removido: ${deviceId}`))
+                        .catch((error) => { console.error(`Erro ao remover ${deviceId}:`, error); alert(`Erro: ${error.message}`); });
+                } else { console.error("Usuário não logado para remover."); }
+            }
+        }
 
     }); // --- FIM DO 'DOMContentLoaded' ---
 </script>
