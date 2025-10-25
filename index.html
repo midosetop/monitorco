@@ -376,6 +376,10 @@ body.dark-theme .remove-btn:hover {
                 const allDevices = snapshot.val();
                 console.log(">>> PASSO F: Conteúdo:", allDevices); // Mantido F
                 clearDashboardAndMap();
+                if (map) {
+             console.log(">>> Chamando map.invalidateSize() DENTRO do listener.");
+             map.invalidateSize();
+              }
                 if (!allDevices) {
                     console.log(">>> PASSO G1: Nenhum dispositivo.");
                     if(roomPanel) roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
@@ -393,6 +397,66 @@ body.dark-theme .remove-btn:hover {
                 }
                 console.log(">>> PASSO I: Processamento concluído.");
             }, (error) => { console.error(">>> ERRO listener:", error); });
+        }
+
+        function updateMapMarker(id, data) {
+            console.log(`>>> updateMapMarker: Tentando adicionar/atualizar marcador para ${id}`); // LOG
+            if (!map) { console.error(">>> updateMapMarker: ERRO - Mapa não inicializado!"); return; } // Verifica mapa
+
+            const { lat, lng, ppm } = data; let color = '#28a745';
+            if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
+            const styleNormal = { radius: 8, fillOpacity: 0.8, stroke: false, fillColor: color };
+
+            try {
+                if (!markers[id]) {
+                    markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map);
+                    console.log(`>>> updateMapMarker: Marcador ${id} CRIADO e adicionado ao mapa.`); // LOG INTERNO SUCESSO
+                } else {
+                     markers[id].setLatLng([lat, lng]); // Atualiza posição caso mude
+                     markers[id].setStyle(styleNormal);
+                     console.log(`>>> updateMapMarker: Marcador ${id} ATUALIZADO.`); // LOG INTERNO SUCESSO
+                }
+                markers[id].styleNormal = styleNormal;
+                const popupContent = `<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`;
+                markers[id].bindPopup(popupContent);
+                markers[id].off('click').on('click', () => { highlightDevice(id, data); });
+            } catch (e) {
+                console.error(`>>> updateMapMarker: ERRO INESPERADO ao processar marcador ${id}:`, e); // LOG INTERNO ERRO
+            }
+        }
+
+        // Função para criar cartões no painel de status (COM DIAGNÓSTICO INTERNO)
+        function updateRoomPanel(deviceId, deviceData) {
+            console.log(`>>> updateRoomPanel: Tentando criar card para ${deviceId}`); // LOG
+            const ppm = deviceData.ppm;
+            const card = document.createElement('div');
+            card.className = 'room-card';
+            let statusClass = 'status-safe';
+            if (ppm >= 100) statusClass = 'status-danger';
+            else if (ppm >= 50) statusClass = 'status-warning';
+            card.classList.add(statusClass);
+            card.innerHTML = `<h3>${deviceId}</h3><p>${ppm} PPM</p>`;
+
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-btn';
+            removeButton.textContent = 'X';
+            removeButton.title = `Remover ${deviceId}`;
+            removeButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                removeDevice(deviceId);
+            });
+            card.appendChild(removeButton);
+
+            card.addEventListener('click', () => {
+                highlightDevice(deviceId, deviceData);
+            });
+
+            if (roomPanel) { // Verifica se o painel existe
+                roomPanel.appendChild(card);
+                console.log(`>>> updateRoomPanel: Card ${deviceId} ADICIONADO ao painel.`); // LOG INTERNO SUCESSO
+            } else {
+                console.error(">>> updateRoomPanel: ERRO - Elemento 'roomPanel' não encontrado!"); // LOG INTERNO ERRO
+            }
         }
 
         function clearDashboardAndMap() { /* ... código ... */ }
