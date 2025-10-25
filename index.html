@@ -245,6 +245,69 @@ body.dark-theme .remove-btn:hover {
         const darkMapUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
         const darkMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
+        function handleAuthError(error) {
+    let message = "";
+    console.warn("Erro de Autenticação:", error.code, error.message); // Log mais detalhado
+    switch (error.code) {
+        case "auth/wrong-password":
+            message = "Senha incorreta. Tente novamente.";
+            break;
+        case "auth/user-not-found":
+            message = "Nenhum usuário encontrado com este e-mail.";
+            break;
+        case "auth/email-already-in-use":
+            message = "Este e-mail já está em uso. Tente fazer login.";
+            break;
+        case "auth/weak-password":
+            message = "A senha precisa ter pelo menos 6 caracteres.";
+            break;
+        case "auth/invalid-email":
+            message = "O formato do e-mail é inválido.";
+            break;
+        case 'auth/popup-closed-by-user':
+             message = 'Login cancelado pelo usuário.'; // Mensagem para popup fechado
+             break;
+        case 'auth/cancelled-popup-request':
+             message = 'Múltiplas tentativas de login. Tente novamente.';
+             break;
+        // Adicione outros casos de erro conforme necessário
+        default:
+            message = "Ocorreu um erro inesperado durante o login. Tente novamente.";
+    }
+    // Garante que o elemento existe antes de tentar mudar o texto
+    const loginErrorMessageElement = document.getElementById('login-error-message');
+    if(loginErrorMessageElement) {
+        loginErrorMessageElement.textContent = message;
+    } else {
+        console.error("Elemento login-error-message não encontrado para exibir erro!");
+    }
+}
+
+        function updateMapTheme(theme) {
+    // Sai da função se o mapa não foi inicializado corretamente
+    if (!map) {
+        console.warn("updateMapTheme chamado, mas o mapa não está pronto.");
+        return;
+    }
+    // Remove a camada anterior, se existir
+    if (currentMapLayer) {
+        map.removeLayer(currentMapLayer);
+    }
+
+    let newUrl = lightMapUrl;
+    let newAttribution = lightMapAttribution;
+
+    if (theme === 'dark') {
+        newUrl = darkMapUrl;
+        newAttribution = darkMapAttribution;
+        console.log("Aplicando tema escuro ao mapa."); // Log
+    } else {
+        console.log("Aplicando tema claro ao mapa."); // Log
+    }
+
+    // Adiciona a nova camada de tiles ao mapa
+    currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
+}
         // --- CÓDIGO DO TEMA ---
         function updateMapTheme(theme) {
             if (!map) return;
