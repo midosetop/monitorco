@@ -243,9 +243,6 @@
         
         // Mapa e variáveis globais
         let map = null;
-        if (document.getElementById('map')) {
-            map = L.map('map').setView([-19.9208, -44.0542], 13);
-        } else { console.error("ERRO CRÍTICO: Elemento 'map' não encontrado!"); }
         let currentMapLayer = null;
         const markers = {};
         let activeMarker = null;
@@ -405,17 +402,42 @@
         // --- LÓGICA DE AUTENTICAÇÃO (onAuthStateChanged) ---
         auth.onAuthStateChanged((user) => {
             console.log(">>> PASSO A: onAuthStateChanged disparado. User:", user ? user.uid : "null");
-            if (user) {
-                // ----- USUÁRIO LOGADO -----
-                console.log(">>> PASSO B: Usuário logado detectado.");
-                if(contentContainer) contentContainer.style.display = 'block';
-                if(loginContainer) loginContainer.style.display = 'none';
-                if(registerContainer) registerContainer.style.display = 'none'; // Esconde o form de registro
-                if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
-                if(loginErrorMessage) loginErrorMessage.textContent = "";
-                if(registerErrorMessage) registerErrorMessage.textContent = "";
-                const userUidDisplay = document.getElementById('user-uid-display');
-                if(userUidDisplay) userUidDisplay.textContent = user.uid;
+           if (user) {
+                // ----- USUÁRIO LOGADO -----
+                console.log(">>> PASSO B: Usuário logado detectado. UID:", user.uid);
+
+                // 1. Mostra o conteúdo
+                if(contentContainer) contentContainer.style.display = 'block';
+                if(loginContainer) loginContainer.style.display = 'none';
+                if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
+                if(loginErrorMessage) loginErrorMessage.textContent = "";
+                const userUidDisplay = document.getElementById('user-uid-display');
+                if(userUidDisplay) userUidDisplay.textContent = user.uid;
+
+                // ========================================================
+                // CORREÇÃO: Inicializa o mapa AGORA (DEPOIS de estar visível)
+                // ========================================================
+                if (!map && document.getElementById('map')) { // Se o mapa ainda não foi inicializado
+                    console.log(">>> Inicializando o mapa AGORA (pois está visível).");
+                    map = L.map('map').setView([-19.9208, -44.0542], 13);
+H               } else if (map) {
+                     console.log(">>> Mapa já existe, apenas invalidando o tamanho.");
+                     map.invalidateSize(); // Se já existe, só redimensiona
+                }
+                
+                // 2. Agora, carregamos o tema do mapa (que adiciona os tiles)
+                updateMapTheme(localStorage.getItem('theme') || 'light');
+                // ========================================================
+                
+                // 3. Agora, buscamos os dados
+                const userUid = user.uid;
+                const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
+                console.log(">>> PASSO C: Preparando para ouvir:", userDevicesPath);
+                if (!devicesRef) {
+                    devicesRef = database.ref(userDevicesPath);
+                    startDatabaseListener(devicesRef);
+                }
+            }
 
                 updateMapTheme(localStorage.getItem('theme') || 'light');
                 if (map) {
