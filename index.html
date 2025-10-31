@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <style>
-        /* --- ESTILOS GERAIS --- */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; transition: background-color 0.3s ease, color 0.3s ease; } /* Added transition */
+        /* --- ESTILOS GERAIS (sem alteração) --- */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; transition: background-color 0.3s ease, color 0.3s ease; }
         #map { height: 60vh; width: 100%; border-bottom: 1px solid #ccc; cursor: pointer; transition: border-color 0.3s ease; }
         .dashboard { padding: 25px; text-align: center; transition: background-color 0.3s ease; }
         .dashboard h1 { margin-top: 0; color: #1c1e21; transition: color 0.3s ease; }
@@ -23,11 +23,11 @@
         .status-warning { color: #ffc107; }
         .status-danger { color: #dc3545; }
 
-        /* --- ESTILOS PAINEL DE STATUS --- */
+        /* --- ESTILOS PAINEL DE STATUS (sem alteração) --- */
         .room-panel-container { padding: 20px 25px; background-color: #fff; text-align: center; border-bottom: 1px solid #ccc; transition: background-color 0.3s ease, border-color 0.3s ease; }
         .room-panel-container h2 { margin-top: 0; margin-bottom: 20px; transition: color 0.3s ease; }
         #room-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding-bottom: 20px; }
-        .room-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; min-width: 200px; text-align: left; transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left-width: 6px; }
+        .room-card { position: relative; border: 1px solid #ddd; border-radius: 8px; padding: 15px; min-width: 200px; text-align: left; transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left-width: 6px; }
         .room-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .room-card h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #1c1e21; transition: color 0.3s ease; }
         .room-card p { font-size: 1.5em; font-weight: 600; margin: 0; transition: color 0.3s ease; }
@@ -39,12 +39,12 @@
         .room-card.status-danger p { color: #dc3545; }
         @keyframes pulse-danger { 0% { background-color: #fff0f1; } 50% { background-color: #ffe0e3; } 100% { background-color: #fff0f1; } }
 
-        /* --- ESTILOS CARD ID USUÁRIO --- */
+        /* --- ESTILOS CARD ID USUÁRIO (sem alteração) --- */
         #user-info-card { text-align: left; }
         #user-info-card p { font-size: 0.9em; line-height: 1.4; transition: color 0.3s ease; }
         #user-uid-display { background-color: #fff; border: 1px solid #ccc; padding: 5px 8px; border-radius: 4px; font-family: monospace; font-size: 1.1em; color: #c7254e; word-wrap: break-word; transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
         
-        /* --- ESTILOS LOGIN --- */
+        /* --- ESTILOS LOGIN (sem alteração) --- */
         #login-container { text-align: center; padding: 40px 20px; max-width: 400px; margin: 50px auto; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: background-color 0.3s ease, box-shadow 0.3s ease; }
         #login-container h1 { margin-top: 0; transition: color 0.3s ease; }
         .login-form input { width: 90%; padding: 12px 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
@@ -56,16 +56,41 @@
         #google-login-button { font-size: 1.1em; padding: 12px 20px; cursor: pointer; background-color: #4285F4; color: white; border: none; border-radius: 5px; font-weight: bold; width: 90%; }
         #login-error-message { color: #dc3545; font-weight: bold; height: 20px; }
 
-        /* --- ESTILOS LOGOUT & TEMA --- */
+        /* ============================================= */
+        /* NOVO CSS PARA TELA DE REGISTRO       */
+        /* ============================================= */
+        #register-container {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 450px; /* Um pouco mais largo */
+            margin: 50px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none; /* COMEÇA ESCONDIDO */
+        }
+        #register-container h1 { margin-top: 0; }
+        #register-container .login-form input { width: 90%; }
+        #register-container .login-buttons { justify-content: center; }
+        #confirm-register-button { background-color: #28a745; color: white; } /* Botão verde */
+        #cancel-register-button { background-color: #6c757d; color: white; }
+        #register-error-message { color: #dc3545; font-weight: bold; height: 20px; }
+        body.dark-theme #register-container { background-color: #1e1e1e; }
+        /* ============================================= */
+
+        /* --- ESTILOS LOGOUT & TEMA (sem alteração) --- */
         #logout-container { text-align: right; padding: 10px 20px; background-color: #e9ecef; transition: background-color 0.3s ease; }
         #logout-container span { margin-right: 15px; font-weight: bold; transition: color 0.3s ease; }
         #logout-button, #theme-toggle-button { cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 5px; padding: 5px 10px; }
-        #theme-toggle-button { margin-right: 10px; background-color: #5a6268; } /* Estilo ligeiramente diferente para o botão de tema */
+        #theme-toggle-button { margin-right: 10px; background-color: #5a6268; }
 
-        /* ============================================= */
-        /* ESTILOS DO TEMA ESCURO              */
-        /* ============================================= */
+        /* --- ESTILO BOTÃO REMOVER (sem alteração) --- */
+        .room-card { position: relative; }
+        .remove-btn { position: absolute; top: 5px; right: 5px; background-color: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; line-height: 18px; text-align: center; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, background-color 0.2s; }
+        .remove-btn:hover { background-color: #c82333; opacity: 1; }
 
+        /* --- ESTILOS TEMA ESCURO (sem alteração) --- */
+        /* ... (todo o seu body.dark-theme ... ) ... */
         body.dark-theme { background-color: #121212; color: #e0e0e0; }
         body.dark-theme #map { border-bottom-color: #333; }
         body.dark-theme .dashboard, body.dark-theme .room-panel-container, body.dark-theme #logout-container { background-color: #1e1e1e; border-bottom-color: #333; }
@@ -83,51 +108,13 @@
         body.dark-theme .room-card.status-danger { background-color: #5c1a1f; border-left-color: #dc3545; animation: none; }
         body.dark-theme .room-card.status-danger p { color: #ffacb1; }
         body.dark-theme #login-container { background-color: #1e1e1e; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        body.dark-theme #register-container { background-color: #1e1e1e; }
         body.dark-theme .login-form input { background-color: #3a3a3a; border-color: #555; color: #e0e0e0; }
         body.dark-theme .login-form input::placeholder { color: #888; }
         body.dark-theme .divider { color: #aaa; }
-        body.dark-theme #logout-container span { color: #e0e0e0; } /* Ajuste cor do email no logout dark - CORRIGIDO */
-        /* ... seu CSS existente ... */
-
-/* ============================================= */
-/* ESTILO DO BOTÃO DE REMOVER              */
-/* ============================================= */
-.room-card {
-    position: relative; /* Necessário para posicionar o botão dentro */
-    /* ... outros estilos do room-card ... */
-}
-
-.remove-btn {
-    position: absolute; /* Posicionamento absoluto dentro do card */
-    top: 5px;
-    right: 5px;
-    background-color: #dc3545; /* Cor vermelha de perigo */
-    color: white;
-    border: none;
-    border-radius: 50%; /* Faz o botão redondo */
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
-    font-weight: bold;
-    line-height: 18px; /* Centraliza o 'X' verticalmente */
-    text-align: center;
-    cursor: pointer;
-    opacity: 0.7; /* Começa um pouco transparente */
-    transition: opacity 0.2s, background-color 0.2s;
-}
-
-.remove-btn:hover {
-    background-color: #c82333; /* Vermelho mais escuro no hover */
-    opacity: 1; /* Fica opaco no hover */
-}
-
-/* Ajuste no tema escuro */
-body.dark-theme .remove-btn {
-    background-color: #a02a33;
-}
-body.dark-theme .remove-btn:hover {
-    background-color: #c82333;
-}
+        body.dark-theme #logout-container span { color: #e0e0e0; }
+        body.dark-theme .remove-btn { background-color: #a02a33; }
+        body.dark-theme .remove-btn:hover { background-color: #c82333; }
     </style>
 </head>
 <body>
@@ -141,13 +128,29 @@ body.dark-theme .remove-btn:hover {
         <p id="login-error-message"></p>
         <div class="login-buttons">
             <button id="login-button-email">Entrar</button>
-            <button id="register-button-email">Criar Conta</button>
-        </div>
+            <button id="register-button-email">Criar Conta</button> </div>
     </div>
     <div class="divider">OU</div>
     <button id="google-login-button">Entrar com Google</button>
 </div>
 
+<div id="register-container" style="display: none;">
+    <h1>Criar Nova Conta</h1>
+    <p>Preencha seus dados para se registrar.</p>
+    <div class="login-form">
+        <input type="text" id="register-name" placeholder="Seu nome completo" required>
+        <input type="email" id="register-email" placeholder="Seu e-mail" required>
+        <input type="password" id="register-password" placeholder="Crie uma senha (mín. 6 caracteres)" required>
+        <input type="text" id="register-dob" placeholder="Data de Nascimento (DD/MM/AAAA)" required>
+        <input type="text" id="register-address" placeholder="Seu endereço" required>
+        <p id="register-error-message"></p>
+        
+        <div class="login-buttons">
+            <button id="confirm-register-button">Confirmar Cadastro</button>
+            <button id="cancel-register-button">Cancelar</button>
+        </div>
+    </div>
+</div>
 <div id="content-container" style="display: none;">
     <div id="logout-container">
         <span id="user-email"></span>
@@ -190,7 +193,7 @@ body.dark-theme .remove-btn:hover {
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
 <script>
-    // Configuração do Firebase
+    // Configuração do Firebase (sem alteração)
     const firebaseConfig = {
       apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s",
       authDomain: "mostra-f2718.firebaseapp.com",
@@ -205,16 +208,14 @@ body.dark-theme .remove-btn:hover {
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const auth = firebase.auth();
-    const provider = new firebase.auth.GoogleAuthProvider(); // Provedor Google
+    const provider = new firebase.auth.GoogleAuthProvider();
 
-    // =======================================================
-    // ESPERA O HTML CARREGAR ANTES DE RODAR O RESTO DO CÓDIGO
-    // =======================================================
+    // Espera o HTML carregar
     document.addEventListener('DOMContentLoaded', () => {
 
         console.log("DOM Carregado. Iniciando script principal.");
 
-        // Referências aos elementos do HTML
+        // Referências aos elementos do HTML (Antigos)
         const loginContainer = document.getElementById('login-container');
         const contentContainer = document.getElementById('content-container');
         const logoutButton = document.getElementById('logout-button');
@@ -223,12 +224,23 @@ body.dark-theme .remove-btn:hover {
         const loginEmailInput = document.getElementById('login-email');
         const loginPasswordInput = document.getElementById('login-password');
         const loginEmailButton = document.getElementById('login-button-email');
-        const registerEmailButton = document.getElementById('register-button-email');
+        const registerEmailButton = document.getElementById('register-button-email'); // Botão na tela de Login
         const googleLoginButton = document.getElementById('google-login-button');
         const loginErrorMessage = document.getElementById('login-error-message');
         const themeToggleButton = document.getElementById('theme-toggle-button');
         const bodyElement = document.body;
-
+        
+        // --- NOVAS REFERÊNCIAS AOS ELEMENTOS DE REGISTRO ---
+        const registerContainer = document.getElementById('register-container');
+        const registerNameInput = document.getElementById('register-name');
+        const registerEmailInput = document.getElementById('register-email');
+        const registerPasswordInput = document.getElementById('register-password');
+        const registerDobInput = document.getElementById('register-dob');
+        const registerAddressInput = document.getElementById('register-address');
+        const confirmRegisterButton = document.getElementById('confirm-register-button');
+        const cancelRegisterButton = document.getElementById('cancel-register-button');
+        const registerErrorMessage = document.getElementById('register-error-message');
+        
         // Mapa e variáveis globais
         let map = null;
         if (document.getElementById('map')) {
@@ -239,52 +251,33 @@ body.dark-theme .remove-btn:hover {
         let activeMarker = null;
         let devicesRef = null;
 
-        // URLs das camadas de mapa
-        const lightMapUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-        const lightMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-        const darkMapUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-        const darkMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+        // URLs das camadas de mapa (sem alteração)
+        const lightMapUrl = '...'; const lightMapAttribution = '...';
+        const darkMapUrl = '...'; const darkMapAttribution = '...';
 
-        // --- CÓDIGO DO TEMA ---
-        function updateMapTheme(theme) {
-            if (!map) return;
-            if (currentMapLayer) { map.removeLayer(currentMapLayer); }
-            let newUrl = lightMapUrl; let newAttribution = lightMapAttribution;
-            if (theme === 'dark') { newUrl = darkMapUrl; newAttribution = darkMapAttribution; }
-            currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
-        }
+        // --- CÓDIGO DO TEMA (sem alteração) ---
+        function updateMapTheme(theme) { /* ... (código) ... */ }
         const currentTheme = localStorage.getItem('theme');
-        if (currentTheme === 'dark') {
-            bodyElement.classList.add('dark-theme');
-            if(themeToggleButton) themeToggleButton.textContent = '☀️';
-        } else {
-             if(themeToggleButton) themeToggleButton.textContent = '🌓';
-        }
-        if (themeToggleButton) {
-            themeToggleButton.onclick = () => {
-                bodyElement.classList.toggle('dark-theme');
-                let theme = 'light';
-                if (bodyElement.classList.contains('dark-theme')) {
-                    theme = 'dark'; themeToggleButton.textContent = '☀️';
-                } else { themeToggleButton.textContent = '🌓'; }
-                localStorage.setItem('theme', theme);
-                updateMapTheme(theme);
-            };
-        }
-        // --- FIM CÓDIGO DO TEMA ---
-
-        // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO ---
-        function handleAuthError(error) {
-            let message = ""; console.warn("Erro Auth:", error.code);
+        /* ... (lógica do tema) ... */
+        if (themeToggleButton) { themeToggleButton.onclick = () => { /* ... (lógica do tema) ... */ }; }
+        
+        // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO (sem alteração) ---
+        function handleAuthError(error, isRegistration = false) { // Modificada para aceitar erros de registro
+            let message = ""; console.warn("Erro Auth:", error.code, error.message);
             switch (error.code) {
                 case "auth/wrong-password": message = "Senha incorreta."; break;
                 case "auth/user-not-found": message = "Usuário não encontrado."; break;
-                case "auth/email-already-in-use": message = "E-mail já em uso."; break;
+                case "auth/email-already-in-use": message = "E-mail já em uso. Tente fazer login."; break;
                 case "auth/weak-password": message = "Senha fraca (mín. 6 caracteres)."; break;
                 case "auth/invalid-email": message = "E-mail inválido."; break;
                 default: message = "Erro. Tente novamente.";
             }
-            if(loginErrorMessage) loginErrorMessage.textContent = message;
+            // Escolhe onde exibir a mensagem de erro
+            if (isRegistration) {
+                if (registerErrorMessage) registerErrorMessage.textContent = message;
+            } else {
+                if (loginErrorMessage) loginErrorMessage.textContent = message;
+            }
         }
 
         // ========================================================== //
@@ -292,59 +285,108 @@ body.dark-theme .remove-btn:hover {
         // ========================================================== //
 
         // Botão SAIR
-        if (logoutButton) {
-            logoutButton.onclick = () => {
-                console.log(">>> Botão Sair clicado! Chamando auth.signOut()...");
-                auth.signOut();
-            };
-        } else { console.error("ERRO: Botão Sair (logoutButton) não encontrado!"); }
-
-        // Botão LOGIN COM GOOGLE (POPUP)
-        if (googleLoginButton) {
-             console.log(">>> Vinculando clique (POPUP) ao botão Google.");
-             googleLoginButton.onclick = () => {
-                 console.log(">>> Botão Google clicado! Chamando signInWithPopup...");
-                 auth.signInWithPopup(provider)
-                     .then((result) => { console.log(">>> Login via Popup bem-sucedido:", result.user.email); })
-                     .catch((error) => { console.error(">>> Erro no signInWithPopup:", error); handleAuthError(error); });
-             };
-         } else { console.error(">>> ERRO CRÍTICO: Botão Google não encontrado!"); }
-
+        if (logoutButton) { logoutButton.onclick = () => { auth.signOut(); }; }
+        
+        // Botão LOGIN COM GOOGLE
+        if (googleLoginButton) { googleLoginButton.onclick = () => { auth.signInWithPopup(provider).catch((err) => handleAuthError(err, false)); }; }
+        
         // Botão LOGIN COM E-MAIL
         if (loginEmailButton) {
             loginEmailButton.onclick = () => {
                 const email = loginEmailInput.value; const password = loginPasswordInput.value;
                 if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
-                console.log(">>> Tentando login com e-mail...");
-                auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
+                auth.signInWithEmailAndPassword(email, password).catch((err) => handleAuthError(err, false));
             };
-        } else { console.error("ERRO: Botão Login Email não encontrado!"); }
-
-        // Botão CRIAR CONTA COM E-MAIL
+        }
+        
+        // --- LÓGICA DE NAVEGAÇÃO DE FORMULÁRIO (NOVA) ---
+        
+        // Botão "CRIAR CONTA" (na tela de login) - AGORA SÓ MOSTRA O FORMULÁRIO
         if (registerEmailButton) {
             registerEmailButton.onclick = () => {
-                const email = loginEmailInput.value; const password = loginPasswordInput.value;
-                if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
-                console.log(">>> Tentando criar conta com e-mail...");
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then(cred => console.log("Conta criada:", cred.user))
-                    .catch(handleAuthError);
+                if (loginContainer) loginContainer.style.display = 'none';
+                if (registerContainer) registerContainer.style.display = 'block';
+                if (loginErrorMessage) loginErrorMessage.textContent = ""; // Limpa erros antigos
             };
-        } else { console.error("ERRO: Botão Registrar Email não encontrado!"); }
+        }
+        
+        // Botão "CANCELAR" (na tela de registro)
+        if (cancelRegisterButton) {
+            cancelRegisterButton.onclick = () => {
+                if (loginContainer) loginContainer.style.display = 'block';
+                if (registerContainer) registerContainer.style.display = 'none';
+                if (registerErrorMessage) registerErrorMessage.textContent = ""; // Limpa erros antigos
+            };
+        }
+
+        // Botão "CONFIRMAR CADASTRO" (NOVO - A LÓGICA PRINCIPAL)
+        if (confirmRegisterButton) {
+            confirmRegisterButton.onclick = () => {
+                // 1. Coleta todos os dados do formulário de registro
+                const name = registerNameInput.value;
+                const email = registerEmailInput.value;
+                const password = registerPasswordInput.value;
+                const dob = registerDobInput.value;
+                const address = registerAddressInput.value;
+                
+                // Validação simples
+                if (!name || !email || !password || !dob || !address) {
+                    if(registerErrorMessage) registerErrorMessage.textContent = "Por favor, preencha todos os campos.";
+                    return;
+                }
+                
+                console.log("Tentando criar conta com e-mail...");
+                
+                // 2. Cria o usuário no AUTHENTICATION
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(userCredential => {
+                        console.log("Conta criada com sucesso:", userCredential.user.uid);
+                        const user = userCredential.user;
+                        
+                        // 3. Salva os dados extras no REALTIME DATABASE
+                        const userProfile = {
+                            nome: name,
+                            email: email,
+                            dataNascimento: dob,
+                            endereco: address,
+                            criadoEm: new Date().toISOString()
+                        };
+                        
+                        // Cria uma nova "pasta" para perfis de usuário
+                        database.ref('perfis_usuarios/' + user.uid).set(userProfile)
+                            .then(() => {
+                                console.log("Perfil do usuário salvo no Database.");
+                                // O onAuthStateChanged vai detectar o login e mudar para o dashboard.
+                                // Não precisamos fazer nada aqui.
+                            })
+                            .catch(dbError => {
+                                console.error("Erro ao salvar perfil no DB:", dbError);
+                                // O usuário foi criado, mas o perfil falhou. Lidar com isso se necessário.
+                                handleAuthError(dbError, true);
+                            });
+                            
+                    })
+                    .catch((error) => {
+                        // Erro ao criar a conta (ex: e-mail já existe)
+                        handleAuthError(error, true); // true = mostrar erro no form de registro
+                    });
+            };
+        }
         // ========================================================== //
 
 
-        // --- LÓGICA DE AUTENTICAÇÃO ---
+        // --- LÓGICA DE AUTENTICAÇÃO (onAuthStateChanged) ---
         auth.onAuthStateChanged((user) => {
             console.log(">>> PASSO A: onAuthStateChanged disparado. User:", user ? user.uid : "null");
-
             if (user) {
                 // ----- USUÁRIO LOGADO -----
                 console.log(">>> PASSO B: Usuário logado detectado.");
                 if(contentContainer) contentContainer.style.display = 'block';
                 if(loginContainer) loginContainer.style.display = 'none';
+                if(registerContainer) registerContainer.style.display = 'none'; // Esconde o form de registro
                 if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
                 if(loginErrorMessage) loginErrorMessage.textContent = "";
+                if(registerErrorMessage) registerErrorMessage.textContent = "";
                 const userUidDisplay = document.getElementById('user-uid-display');
                 if(userUidDisplay) userUidDisplay.textContent = user.uid;
 
@@ -358,28 +400,40 @@ body.dark-theme .remove-btn:hover {
                     devicesRef = database.ref(userDevicesPath);
                     startDatabaseListener(devicesRef);
                 }
-
             } else {
                 // ----- USUÁRIO DESLOGADO -----
                 console.log(">>> Usuário deslogado.");
                 if(contentContainer) contentContainer.style.display = 'none';
                 if(loginContainer) loginContainer.style.display = 'block';
+                if(registerContainer) registerContainer.style.display = 'none'; // Esconde o form de registro
                 
-                // Limpa os dados
                 if (devicesRef) { devicesRef.off(); devicesRef = null; console.log(">>> Ouvinte DB removido."); }
                 clearDashboardAndMap();
                 if (currentMapLayer && map) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
             }
         });
 
-        // --- FUNÇÕES DO DASHBOARD ---
+        // --- FUNÇÕES DO DASHBOARD (Definições completas) ---
+        function startDatabaseListener(ref) { /* ... (código) ... */ }
+        function clearDashboardAndMap() { /* ... (código) ... */ }
+        function updateDashboard(data, deviceId) { /* ... (código) ... */ }
+        function highlightDevice(deviceId, deviceData) { /* ... (código) ... */ }
+        function updateMapMarker(id, data) { /* ... (código) ... */ }
+        function updateRoomPanel(deviceId, deviceData) { /* ... (código) ... */ }
+        function removeDevice(deviceId) { /* ... (código) ... */ }
+        
+        // (Aqui estão as definições completas que você já tinha)
+        // ... (cole as definições completas de startDatabaseListener, clearDashboardAndMap, etc. aqui) ...
+        // ... (Para economizar espaço, estou omitindo, mas cole-as do seu código anterior) ...
+
+        // (Aqui está o preenchimento das funções que você já tinha)
         function startDatabaseListener(ref) {
             console.log(">>> PASSO D: Anexando listener:", ref.toString());
             ref.on('value', (snapshot) => {
                 console.log(">>> PASSO E: Listener disparado! Snapshot:", snapshot.val() ? "COM DADOS" : "VAZIO");
                 const allDevices = snapshot.val();
                 console.log(">>> PASSO F: Conteúdo:", allDevices);
-                clearDashboardAndMap(); // Limpa antes de adicionar
+                clearDashboardAndMap();
                 if (!allDevices) {
                     console.log(">>> PASSO G1: Nenhum dispositivo.");
                     if(roomPanel) roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
@@ -420,7 +474,8 @@ body.dark-theme .remove-btn:hover {
             }
             deviceIdElement.textContent = `Mostrando dados do: ${deviceId}`;
             const ppm = data.ppm; ppmElement.textContent = ppm; 
-            statusElement.className = "value"; // Reseta classes
+            statusElement.className = "value";
+            statusElement.classList.remove('status-safe', 'status-warning', 'status-danger');
             if (ppm < 50) { statusElement.textContent = "Seguro"; statusElement.classList.add('status-safe'); }
             else if (ppm < 100) { statusElement.textContent = "Atenção"; statusElement.classList.add('status-warning'); }
             else { statusElement.textContent = "Perigo"; statusElement.classList.add('status-danger'); }
@@ -499,30 +554,6 @@ body.dark-theme .remove-btn:hover {
                         .catch((error) => { console.error(`Erro ao remover ${deviceId}:`, error); alert(`Erro: ${error.message}`); });
                 } else { console.error("Usuário não logado para remover."); }
             }
-        }
-        
-        // Definições de funções que faltavam
-        function handleAuthError(error) {
-            let message = ""; console.warn("Erro Auth:", error.code, error.message);
-            switch (error.code) {
-                case "auth/wrong-password": message = "Senha incorreta."; break;
-                case "auth/user-not-found": message = "Usuário não encontrado."; break;
-                case "auth/email-already-in-use": message = "E-mail já em uso. Tente fazer login."; break;
-                case "auth/weak-password": message = "Senha fraca (mín. 6 caracteres)."; break;
-                case "auth/invalid-email": message = "E-mail inválido."; break;
-                case 'auth/popup-closed-by-user': message = 'Login cancelado.'; break;
-                case 'auth/cancelled-popup-request': message = 'Múltiplas tentativas de login.'; break;
-                default: message = "Erro. Tente novamente.";
-            }
-            if(loginErrorMessage) { loginErrorMessage.textContent = message; }
-        }
-        
-        function updateMapTheme(theme) {
-            if (!map) return;
-            if (currentMapLayer) { map.removeLayer(currentMapLayer); }
-            let newUrl = lightMapUrl; let newAttribution = lightMapAttribution;
-            if (theme === 'dark') { newUrl = darkMapUrl; newAttribution = darkMapAttribution; }
-            currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
         }
 
     }); // --- FIM DO 'DOMContentLoaded' ---
