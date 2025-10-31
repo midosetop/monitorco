@@ -192,20 +192,20 @@ body.dark-theme .remove-btn:hover {
 <script>
     // Configuração do Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s", // CONFIRME SE ESTA É SUA CHAVE CORRETA
+      apiKey: "AIzaSyC__Rkv0nXP20RL31mRsQGH-xOuABbnW5s",
       authDomain: "mostra-f2718.firebaseapp.com",
       databaseURL: "https://mostra-f2718-default-rtdb.firebaseio.com",
       projectId: "mostra-f2718",
       storageBucket: "mostra-f2718.appspot.com",
       messagingSenderId: "581453261928",
-      appId: "1:581453261928:web:5b92c9aa0cf0cbe4fd5fdd" // CONFIRME SE ESTE É SEU APP ID CORRETO
+      appId: "1:581453261928:web:5b92c9aa0cf0cbe4fd5fdd"
     };
 
     // Inicializa o Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const auth = firebase.auth();
-    const provider = new firebase.auth.GoogleAuthProvider();
+    const provider = new firebase.auth.GoogleAuthProvider(); // Provedor Google
 
     // =======================================================
     // ESPERA O HTML CARREGAR ANTES DE RODAR O RESTO DO CÓDIGO
@@ -245,69 +245,6 @@ body.dark-theme .remove-btn:hover {
         const darkMapUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
         const darkMapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-        function handleAuthError(error) {
-    let message = "";
-    console.warn("Erro de Autenticação:", error.code, error.message); // Log mais detalhado
-    switch (error.code) {
-        case "auth/wrong-password":
-            message = "Senha incorreta. Tente novamente.";
-            break;
-        case "auth/user-not-found":
-            message = "Nenhum usuário encontrado com este e-mail.";
-            break;
-        case "auth/email-already-in-use":
-            message = "Este e-mail já está em uso. Tente fazer login.";
-            break;
-        case "auth/weak-password":
-            message = "A senha precisa ter pelo menos 6 caracteres.";
-            break;
-        case "auth/invalid-email":
-            message = "O formato do e-mail é inválido.";
-            break;
-        case 'auth/popup-closed-by-user':
-             message = 'Login cancelado pelo usuário.'; // Mensagem para popup fechado
-             break;
-        case 'auth/cancelled-popup-request':
-             message = 'Múltiplas tentativas de login. Tente novamente.';
-             break;
-        // Adicione outros casos de erro conforme necessário
-        default:
-            message = "Ocorreu um erro inesperado durante o login. Tente novamente.";
-    }
-    // Garante que o elemento existe antes de tentar mudar o texto
-    const loginErrorMessageElement = document.getElementById('login-error-message');
-    if(loginErrorMessageElement) {
-        loginErrorMessageElement.textContent = message;
-    } else {
-        console.error("Elemento login-error-message não encontrado para exibir erro!");
-    }
-}
-
-        function updateMapTheme(theme) {
-    // Sai da função se o mapa não foi inicializado corretamente
-    if (!map) {
-        console.warn("updateMapTheme chamado, mas o mapa não está pronto.");
-        return;
-    }
-    // Remove a camada anterior, se existir
-    if (currentMapLayer) {
-        map.removeLayer(currentMapLayer);
-    }
-
-    let newUrl = lightMapUrl;
-    let newAttribution = lightMapAttribution;
-
-    if (theme === 'dark') {
-        newUrl = darkMapUrl;
-        newAttribution = darkMapAttribution;
-        console.log("Aplicando tema escuro ao mapa."); // Log
-    } else {
-        console.log("Aplicando tema claro ao mapa."); // Log
-    }
-
-    // Adiciona a nova camada de tiles ao mapa
-    currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
-}
         // --- CÓDIGO DO TEMA ---
         function updateMapTheme(theme) {
             if (!map) return;
@@ -350,31 +287,60 @@ body.dark-theme .remove-btn:hover {
             if(loginErrorMessage) loginErrorMessage.textContent = message;
         }
 
-        // --- VINCULA CLIQUES DOS BOTÕES ---
+        // ========================================================== //
+        //          VINCULA OS CLIQUES DOS BOTÕES AQUI                //
+        // ========================================================== //
+
+        // Botão SAIR
         if (logoutButton) {
-            logoutButton.onclick = () => { console.log(">>> Saindo..."); auth.signOut(); };
-        } else { console.error("ERRO: Botão Sair não encontrado!"); }
+            logoutButton.onclick = () => {
+                console.log(">>> Botão Sair clicado! Chamando auth.signOut()...");
+                auth.signOut();
+            };
+        } else { console.error("ERRO: Botão Sair (logoutButton) não encontrado!"); }
 
+        // Botão LOGIN COM GOOGLE (POPUP)
         if (googleLoginButton) {
-             googleLoginButton.onclick = () => { console.log(">>> Login Google..."); auth.signInWithPopup(provider).catch(handleAuthError); };
-         } else { console.error(">>> ERRO: Botão Google não encontrado!"); }
+             console.log(">>> Vinculando clique (POPUP) ao botão Google.");
+             googleLoginButton.onclick = () => {
+                 console.log(">>> Botão Google clicado! Chamando signInWithPopup...");
+                 auth.signInWithPopup(provider)
+                     .then((result) => { console.log(">>> Login via Popup bem-sucedido:", result.user.email); })
+                     .catch((error) => { console.error(">>> Erro no signInWithPopup:", error); handleAuthError(error); });
+             };
+         } else { console.error(">>> ERRO CRÍTICO: Botão Google não encontrado!"); }
 
+        // Botão LOGIN COM E-MAIL
         if (loginEmailButton) {
-            loginEmailButton.onclick = () => { /* ... código login email ... */ };
+            loginEmailButton.onclick = () => {
+                const email = loginEmailInput.value; const password = loginPasswordInput.value;
+                if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
+                console.log(">>> Tentando login com e-mail...");
+                auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
+            };
         } else { console.error("ERRO: Botão Login Email não encontrado!"); }
 
+        // Botão CRIAR CONTA COM E-MAIL
         if (registerEmailButton) {
-            registerEmailButton.onclick = () => { /* ... código registro email ... */ };
+            registerEmailButton.onclick = () => {
+                const email = loginEmailInput.value; const password = loginPasswordInput.value;
+                if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
+                console.log(">>> Tentando criar conta com e-mail...");
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(cred => console.log("Conta criada:", cred.user))
+                    .catch(handleAuthError);
+            };
         } else { console.error("ERRO: Botão Registrar Email não encontrado!"); }
-        // --- FIM VINCULA CLIQUES ---
+        // ========================================================== //
 
 
         // --- LÓGICA DE AUTENTICAÇÃO ---
         auth.onAuthStateChanged((user) => {
-            console.log(">>> PASSO A: Auth state changed. User:", user ? user.uid : "null");
+            console.log(">>> PASSO A: onAuthStateChanged disparado. User:", user ? user.uid : "null");
+
             if (user) {
-                // LOGADO
-                console.log(">>> PASSO B: Logado. UID:", user.uid);
+                // ----- USUÁRIO LOGADO -----
+                console.log(">>> PASSO B: Usuário logado detectado.");
                 if(contentContainer) contentContainer.style.display = 'block';
                 if(loginContainer) loginContainer.style.display = 'none';
                 if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
@@ -387,30 +353,33 @@ body.dark-theme .remove-btn:hover {
 
                 const userUid = user.uid;
                 const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
-                console.log(">>> PASSO C: Ouvindo:", userDevicesPath);
+                console.log(">>> PASSO C: Preparando para ouvir:", userDevicesPath);
                 if (!devicesRef) {
                     devicesRef = database.ref(userDevicesPath);
                     startDatabaseListener(devicesRef);
                 }
+
             } else {
-                // DESLOGADO
-                console.log(">>> Deslogado.");
+                // ----- USUÁRIO DESLOGADO -----
+                console.log(">>> Usuário deslogado.");
                 if(contentContainer) contentContainer.style.display = 'none';
                 if(loginContainer) loginContainer.style.display = 'block';
-                if (devicesRef) { devicesRef.off(); devicesRef = null; console.log(">>> Listener DB removido."); }
+                
+                // Limpa os dados
+                if (devicesRef) { devicesRef.off(); devicesRef = null; console.log(">>> Ouvinte DB removido."); }
                 clearDashboardAndMap();
                 if (currentMapLayer && map) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
             }
         });
 
-        // --- FUNÇÕES DO DASHBOARD (DEFINIÇÕES COMPLETAS) ---
+        // --- FUNÇÕES DO DASHBOARD ---
         function startDatabaseListener(ref) {
             console.log(">>> PASSO D: Anexando listener:", ref.toString());
             ref.on('value', (snapshot) => {
                 console.log(">>> PASSO E: Listener disparado! Snapshot:", snapshot.val() ? "COM DADOS" : "VAZIO");
                 const allDevices = snapshot.val();
                 console.log(">>> PASSO F: Conteúdo:", allDevices);
-                clearDashboardAndMap();
+                clearDashboardAndMap(); // Limpa antes de adicionar
                 if (!allDevices) {
                     console.log(">>> PASSO G1: Nenhum dispositivo.");
                     if(roomPanel) roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
@@ -431,7 +400,8 @@ body.dark-theme .remove-btn:hover {
         }
 
         function clearDashboardAndMap() {
-            updateDashboard(null); if(roomPanel) roomPanel.innerHTML = '';
+            updateDashboard(null); 
+            if(roomPanel) roomPanel.innerHTML = '';
             for (const markerId in markers) {
                 if (map && markers[markerId]) { map.removeLayer(markers[markerId]); }
                 delete markers[markerId];
@@ -449,8 +419,8 @@ body.dark-theme .remove-btn:hover {
                 deviceIdElement.textContent = "Selecione um dispositivo no mapa ou painel"; return;
             }
             deviceIdElement.textContent = `Mostrando dados do: ${deviceId}`;
-            const ppm = data.ppm; ppmElement.textContent = ppm; statusElement.className = "value";
-            statusElement.classList.remove('status-safe', 'status-warning', 'status-danger'); // Limpa classes antigas
+            const ppm = data.ppm; ppmElement.textContent = ppm; 
+            statusElement.className = "value"; // Reseta classes
             if (ppm < 50) { statusElement.textContent = "Seguro"; statusElement.classList.add('status-safe'); }
             else if (ppm < 100) { statusElement.textContent = "Atenção"; statusElement.classList.add('status-warning'); }
             else { statusElement.textContent = "Perigo"; statusElement.classList.add('status-danger'); }
@@ -475,11 +445,9 @@ body.dark-theme .remove-btn:hover {
         function updateMapMarker(id, data) {
             console.log(`>>> updateMapMarker: Processando ${id}`);
             if (!map) { console.error(">>> updateMapMarker: ERRO - Mapa não inicializado!"); return; }
-
             const { lat, lng, ppm } = data; let color = '#28a745';
             if (ppm >= 100) color = '#dc3545'; else if (ppm >= 50) color = '#ffc107';
             const styleNormal = { radius: 8, fillOpacity: 0.8, stroke: false, fillColor: color };
-
             try {
                 if (!markers[id]) {
                     markers[id] = L.circleMarker([lat, lng], styleNormal).addTo(map);
@@ -489,7 +457,7 @@ body.dark-theme .remove-btn:hover {
                      markers[id].setStyle(styleNormal);
                      console.log(`>>> updateMapMarker: Marcador ${id} ATUALIZADO.`);
                 }
-                markers[id].styleNormal = styleNormal; // Salva o estilo normal
+                markers[id].styleNormal = styleNormal;
                 const popupContent = `<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`;
                 markers[id].bindPopup(popupContent);
                 markers[id].off('click').on('click', () => { highlightDevice(id, data); });
@@ -501,7 +469,6 @@ body.dark-theme .remove-btn:hover {
         function updateRoomPanel(deviceId, deviceData) {
             console.log(`>>> updateRoomPanel: Criando card ${deviceId}`);
             if (!roomPanel) { console.error(">>> updateRoomPanel: ERRO - Painel não encontrado!"); return; }
-
             const ppm = deviceData.ppm;
             const card = document.createElement('div');
             card.className = 'room-card';
@@ -510,16 +477,13 @@ body.dark-theme .remove-btn:hover {
             else if (ppm >= 50) statusClass = 'status-warning';
             card.classList.add(statusClass);
             card.innerHTML = `<h3>${deviceId}</h3><p>${ppm} PPM</p>`;
-
             const removeButton = document.createElement('button');
             removeButton.className = 'remove-btn';
             removeButton.textContent = 'X';
             removeButton.title = `Remover ${deviceId}`;
             removeButton.addEventListener('click', (event) => { event.stopPropagation(); removeDevice(deviceId); });
             card.appendChild(removeButton);
-
             card.addEventListener('click', () => { highlightDevice(deviceId, deviceData); });
-
             roomPanel.appendChild(card);
             console.log(`>>> updateRoomPanel: Card ${deviceId} ADICIONADO.`);
         }
@@ -535,6 +499,30 @@ body.dark-theme .remove-btn:hover {
                         .catch((error) => { console.error(`Erro ao remover ${deviceId}:`, error); alert(`Erro: ${error.message}`); });
                 } else { console.error("Usuário não logado para remover."); }
             }
+        }
+        
+        // Definições de funções que faltavam
+        function handleAuthError(error) {
+            let message = ""; console.warn("Erro Auth:", error.code, error.message);
+            switch (error.code) {
+                case "auth/wrong-password": message = "Senha incorreta."; break;
+                case "auth/user-not-found": message = "Usuário não encontrado."; break;
+                case "auth/email-already-in-use": message = "E-mail já em uso. Tente fazer login."; break;
+                case "auth/weak-password": message = "Senha fraca (mín. 6 caracteres)."; break;
+                case "auth/invalid-email": message = "E-mail inválido."; break;
+                case 'auth/popup-closed-by-user': message = 'Login cancelado.'; break;
+                case 'auth/cancelled-popup-request': message = 'Múltiplas tentativas de login.'; break;
+                default: message = "Erro. Tente novamente.";
+            }
+            if(loginErrorMessage) { loginErrorMessage.textContent = message; }
+        }
+        
+        function updateMapTheme(theme) {
+            if (!map) return;
+            if (currentMapLayer) { map.removeLayer(currentMapLayer); }
+            let newUrl = lightMapUrl; let newAttribution = lightMapAttribution;
+            if (theme === 'dark') { newUrl = darkMapUrl; newAttribution = darkMapAttribution; }
+            currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
         }
 
     }); // --- FIM DO 'DOMContentLoaded' ---
