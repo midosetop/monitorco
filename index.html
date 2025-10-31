@@ -418,7 +418,13 @@
                 if(userUidDisplay) userUidDisplay.textContent = user.uid;
 
                 updateMapTheme(localStorage.getItem('theme') || 'light');
-                if (map) { setTimeout(() => map.invalidateSize(), 100); }
+                if (map) {
+                    setTimeout(() => {
+                        console.log(">>> Forçando redesenho do mapa (invalidateSize) e carregando tema...");
+                        map.invalidateSize(); // 1. Força o mapa a ver o tamanho do div
+                        updateMapTheme(localStorage.getItem('theme') || 'light'); // 2. AGORA carrega os tiles
+                    }, 100); // 100ms de atraso para o CSS 'display: block' ser renderizado
+                }
 
                 const userUid = user.uid;
                 const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
