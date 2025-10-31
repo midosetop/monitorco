@@ -255,11 +255,38 @@
         const lightMapUrl = '...'; const lightMapAttribution = '...';
         const darkMapUrl = '...'; const darkMapAttribution = '...';
 
-        // --- CÓDIGO DO TEMA (sem alteração) ---
-        function updateMapTheme(theme) { /* ... (código) ... */ }
+        // --- CÓDIGO DO TEMA ---
+        function updateMapTheme(theme) {
+            if (!map) return; // Não faz nada se o mapa não foi inicializado
+            if (currentMapLayer) { map.removeLayer(currentMapLayer); }
+            let newUrl = lightMapUrl; let newAttribution = lightMapAttribution;
+            if (theme === 'dark') {
+                newUrl = darkMapUrl;
+                newAttribution = darkMapAttribution;
+            }
+            currentMapLayer = L.tileLayer(newUrl, { attribution: newAttribution }).addTo(map);
+        }
+        
         const currentTheme = localStorage.getItem('theme');
-        /* ... (lógica do tema) ... */
-        if (themeToggleButton) { themeToggleButton.onclick = () => { /* ... (lógica do tema) ... */ }; }
+        if (currentTheme === 'dark') {
+            bodyElement.classList.add('dark-theme');
+            if(themeToggleButton) themeToggleButton.textContent = '☀️';
+        } else {
+             if(themeToggleButton) themeToggleButton.textContent = '🌓';
+        }
+
+        if (themeToggleButton) {
+            themeToggleButton.onclick = () => {
+                bodyElement.classList.toggle('dark-theme');
+                let theme = 'light';
+                if (bodyElement.classList.contains('dark-theme')) {
+                    theme = 'dark'; themeToggleButton.textContent = '☀️';
+                } else { themeToggleButton.textContent = '🌓'; }
+                localStorage.setItem('theme', theme);
+                updateMapTheme(theme); // Chama a função que agora tem código
+            };
+        }
+        // --- FIM CÓDIGO DO TEMA ---
         
         // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO (sem alteração) ---
         function handleAuthError(error, isRegistration = false) { // Modificada para aceitar erros de registro
