@@ -208,7 +208,7 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const auth = firebase.auth();
-    const provider = new firebase.auth.GoogleAuthProvider(); // Provedor Google
+    const provider = new firebase.auth.GoogleAuthProvider();
 
     // =======================================================
     // ESPERA O HTML CARREGAR ANTES DE RODAR O RESTO DO CÓDIGO
@@ -217,23 +217,39 @@
 
         console.log("DOM Carregado. Iniciando script principal.");
 
-        // Referências aos elementos do HTML
+        // Referências aos elementos do HTML (Login)
         const loginContainer = document.getElementById('login-container');
+        const loginEmailInput = document.getElementById('login-email');
+        const loginPasswordInput = document.getElementById('login-password');
+        const loginEmailButton = document.getElementById('login-button-email');
+        const googleLoginButton = document.getElementById('google-login-button');
+        const loginErrorMessage = document.getElementById('login-error-message');
+        
+        // Referências aos elementos do HTML (Registro - NOVO)
+        const registerContainer = document.getElementById('register-container');
+        const registerEmailButton = document.getElementById('register-button-email'); // O botão na tela de login
+        const registerNameInput = document.getElementById('register-name');
+        const registerEmailInput = document.getElementById('register-email');
+        const registerPasswordInput = document.getElementById('register-password');
+        const registerDobInput = document.getElementById('register-dob');
+        const registerAddressInput = document.getElementById('register-address');
+        const confirmRegisterButton = document.getElementById('confirm-register-button');
+        const cancelRegisterButton = document.getElementById('cancel-register-button');
+        const registerErrorMessage = document.getElementById('register-error-message');
+
+        // Referências aos elementos do HTML (Conteúdo Principal)
         const contentContainer = document.getElementById('content-container');
         const logoutButton = document.getElementById('logout-button');
         const userEmailElement = document.getElementById('user-email');
         const roomPanel = document.getElementById('room-panel');
-        const loginEmailInput = document.getElementById('login-email');
-        const loginPasswordInput = document.getElementById('login-password');
-        const loginEmailButton = document.getElementById('login-button-email');
-        const registerEmailButton = document.getElementById('register-button-email');
-        const googleLoginButton = document.getElementById('google-login-button');
-        const loginErrorMessage = document.getElementById('login-error-message');
         const themeToggleButton = document.getElementById('theme-toggle-button');
         const bodyElement = document.body;
 
         // Mapa e variáveis globais
-        let map = null; // *** CORREÇÃO DO MAPA: Inicializa como nulo ***
+        let map = null;
+        if (document.getElementById('map')) {
+            map = L.map('map').setView([-19.9208, -44.0542], 13);
+        } else { console.error("ERRO CRÍTICO: Elemento 'map' não encontrado!"); }
         let currentMapLayer = null;
         const markers = {};
         let activeMarker = null;
@@ -274,16 +290,30 @@
         // --- FIM CÓDIGO DO TEMA ---
 
         // --- FUNÇÕES DE LOGIN/LOGOUT/ERRO ---
-        function handleAuthError(error) {
+        function handleAuthError(error, isRegistration = false) { // Modificado para aceitar erros de registro
             let message = ""; console.warn("Erro Auth:", error.code, error.message);
-            switch (error.code) { /* ... (todos os cases de erro) ... */ }
-            if(loginErrorMessage) loginErrorMessage.textContent = message;
+            switch (error.code) {
+                case "auth/wrong-password": message = "Senha incorreta."; break;
+                case "auth/user-not-found": message = "Usuário não encontrado."; break;
+                case "auth/email-already-in-use": message = "E-mail já em uso. Tente fazer login."; break;
+                case "auth/weak-password": message = "Senha fraca (mín. 6 caracteres)."; break;
+                case "auth/invalid-email": message = "E-mail inválido."; break;
+                case 'auth/popup-closed-by-user': message = 'Login cancelado.'; break;
+                case 'auth/cancelled-popup-request': message = 'Múltiplas tentativas de login.'; break;
+                default: message = "Erro. Tente novamente.";
+            }
+            // Escolhe onde exibir a mensagem de erro
+            if (isRegistration) {
+                if (registerErrorMessage) registerErrorMessage.textContent = message;
+            } else {
+                if (loginErrorMessage) loginErrorMessage.textContent = message;
+            }
         }
 
         // ========================================================== //
         //          VINCULA OS CLIQUES DOS BOTÕES AQUI                //
         // ========================================================== //
-        
+
         // Botão SAIR
         if (logoutButton) {
             logoutButton.onclick = () => {
@@ -292,14 +322,14 @@
             };
         } else { console.error("ERRO: Botão Sair (logoutButton) não encontrado!"); }
 
-        // Botão LOGIN COM GOOGLE (POPUP)
+        // Botão LOGIN COM GOOGLE
         if (googleLoginButton) {
              console.log(">>> Vinculando clique (POPUP) ao botão Google.");
              googleLoginButton.onclick = () => {
                  console.log(">>> Botão Google clicado! Chamando signInWithPopup...");
                  auth.signInWithPopup(provider)
                      .then((result) => { console.log(">>> Login via Popup bem-sucedido:", result.user.email); })
-                     .catch((error) => { console.error(">>> Erro no signInWithPopup:", error); handleAuthError(error); });
+                     .catch((error) => { console.error(">>> Erro no signInWithPopup:", error); handleAuthError(error, false); });
              };
          } else { console.error(">>> ERRO CRÍTICO: Botão Google não encontrado!"); }
 
@@ -309,22 +339,81 @@
                 const email = loginEmailInput.value; const password = loginPasswordInput.value;
                 if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
                 console.log(">>> Tentando login com e-mail...");
-                auth.signInWithEmailAndPassword(email, password).catch(handleAuthError);
+                auth.signInWithEmailAndPassword(email, password).catch((err) => handleAuthError(err, false));
             };
         } else { console.error("ERRO: Botão Login Email não encontrado!"); }
 
-        // Botão CRIAR CONTA COM E-MAIL
+        // --- LÓGICA DE NAVEGAÇÃO DE FORMULÁRIO (CORRIGIDA) ---
+        
+        // Botão "CRIAR CONTA" (na tela de login) - SÓ MOSTRA O FORMULÁRIO
         if (registerEmailButton) {
             registerEmailButton.onclick = () => {
-                const email = loginEmailInput.value; const password = loginPasswordInput.value;
-                if (!email || !password) { if(loginErrorMessage) loginErrorMessage.textContent = "Preencha e-mail e senha."; return; }
-                console.log(">>> Tentando criar conta com e-mail...");
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then(cred => console.log("Conta criada:", cred.user))
-                    .catch(handleAuthError);
+                if (loginContainer) loginContainer.style.display = 'none';
+                if (registerContainer) registerContainer.style.display = 'block';
+                if (loginErrorMessage) loginErrorMessage.textContent = "";
             };
-        } else { console.error("ERRO: Botão Registrar Email não encontrado!"); }
+        } else { console.error("ERRO: Botão 'Criar Conta' (registerEmailButton) não encontrado!"); }
+        
+        // Botão "CANCELAR" (na tela de registro)
+        if (cancelRegisterButton) {
+            cancelRegisterButton.onclick = () => {
+                if (loginContainer) loginContainer.style.display = 'block';
+                if (registerContainer) registerContainer.style.display = 'none';
+                if (registerErrorMessage) registerErrorMessage.textContent = "";
+            };
+        } else { console.error("ERRO: Botão 'Cancelar' (cancelRegisterButton) não encontrado!"); }
+
+        // Botão "CONFIRMAR CADASTRO" (A LÓGICA PRINCIPAL)
+        if (confirmRegisterButton) {
+            confirmRegisterButton.onclick = () => {
+                // 1. Coleta todos os dados do formulário de registro
+                const name = registerNameInput.value;
+                const email = registerEmailInput.value;
+                const password = registerPasswordInput.value;
+                const dob = registerDobInput.value;
+                const address = registerAddressInput.value;
+                
+                if (!name || !email || !password || !dob || !address) {
+                    if(registerErrorMessage) registerErrorMessage.textContent = "Por favor, preencha todos os campos.";
+                    return;
+                }
+                
+                console.log(">>> Tentando criar conta com e-mail...");
+                
+                // 2. Cria o usuário no AUTHENTICATION
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(userCredential => {
+                        console.log("Conta criada com sucesso:", userCredential.user.uid);
+                        const user = userCredential.user;
+                        
+                        // 3. Salva os dados extras no REALTIME DATABASE
+                        const userProfile = {
+                            nome: name,
+                            email: email,
+                            dataNascimento: dob,
+                            endereco: address,
+                            criadoEm: new Date().toISOString()
+                        };
+                        
+                        // Cria uma nova "pasta" para perfis de usuário
+                        database.ref('perfis_usuarios/' + user.uid).set(userProfile)
+                            .then(() => {
+                                console.log("Perfil do usuário salvo no Database.");
+                                // O onAuthStateChanged vai detectar o login e mudar a tela.
+                            })
+                            .catch(dbError => {
+                                console.error("Erro ao salvar perfil no DB:", dbError);
+                                handleAuthError(dbError, true);
+                            });
+                    })
+                    .catch((error) => {
+                        // Erro ao criar a conta (ex: e-mail já existe)
+                        handleAuthError(error, true); // true = mostrar erro no form de registro
+                    });
+            };
+        } else { console.error("ERRO: Botão 'Confirmar Cadastro' (confirmRegisterButton) não encontrado!"); }
         // ========================================================== //
+
 
         // --- LÓGICA DE AUTENTICAÇÃO ---
         auth.onAuthStateChanged((user) => {
@@ -335,22 +424,15 @@
                 console.log(">>> PASSO B: Usuário logado detectado.");
                 if(contentContainer) contentContainer.style.display = 'block';
                 if(loginContainer) loginContainer.style.display = 'none';
+                if(registerContainer) registerContainer.style.display = 'none'; // Garante que o registro suma
                 if(userEmailElement) userEmailElement.textContent = `Logado como: ${user.email}`;
                 if(loginErrorMessage) loginErrorMessage.textContent = "";
+                if(registerErrorMessage) registerErrorMessage.textContent = "";
                 const userUidDisplay = document.getElementById('user-uid-display');
                 if(userUidDisplay) userUidDisplay.textContent = user.uid;
 
-                // ========================================================
-                // *** CORREÇÃO DO MAPA: Inicializa o mapa AGORA ***
-                // ========================================================
-                if (!map && document.getElementById('map')) { // Se o mapa ainda não foi inicializado
-                    console.log(">>> Inicializando o mapa AGORA (pois está visível).");
-                    map = L.map('map').setView([-19.9208, -44.0542], 13);
-                }
-                
-                // Agora, carregamos o tema do mapa (que adiciona os tiles)
                 updateMapTheme(localStorage.getItem('theme') || 'light');
-                // ========================================================
+                if (map) { setTimeout(() => map.invalidateSize(), 100); }
 
                 const userUid = user.uid;
                 const userDevicesPath = 'dispositivos_por_usuario/' + userUid;
@@ -365,41 +447,25 @@
                 console.log(">>> Usuário deslogado.");
                 if(contentContainer) contentContainer.style.display = 'none';
                 if(loginContainer) loginContainer.style.display = 'block';
-
+                if(registerContainer) registerContainer.style.display = 'none'; // Garante que o registro suma
+                
                 if (devicesRef) { devicesRef.off(); devicesRef = null; console.log(">>> Ouvinte DB removido."); }
                 clearDashboardAndMap();
-                if (currentMapLayer && map) {
-                    map.removeLayer(currentMapLayer); 
-                    currentMapLayer = null;
-                }
-                // *** CORREÇÃO DO MAPA: Destrói o mapa ao deslogar ***
-                if (map) {
-                    map.remove();
-                    map = null;
-                    console.log(">>> Mapa destruído no logout.");
-                }
+                if (currentMapLayer && map) { map.removeLayer(currentMapLayer); currentMapLayer = null; }
             }
         });
 
-        // --- FUNÇÕES DO DASHBOARD (Definições completas) ---
-        // (Vou colar todas elas aqui para garantir)
-
+        // ==================================================================
+        //        DEFINIÇÃO DAS FUNÇÕES DO DASHBOARD (COMPLETAS)
+        // ==================================================================
+        
         function startDatabaseListener(ref) {
             console.log(">>> PASSO D: Anexando listener:", ref.toString());
             ref.on('value', (snapshot) => {
                 console.log(">>> PASSO E: Listener disparado! Snapshot:", snapshot.val() ? "COM DADOS" : "VAZIO");
                 const allDevices = snapshot.val();
                 console.log(">>> PASSO F: Conteúdo:", allDevices);
-                
-                clearDashboardAndMap(); // Limpa antes de adicionar
-                
-                // *** CORREÇÃO DO MAPA: Chama invalidateSize AQUI ***
-                // Depois que os dados chegam e o painel limpa, antes de adicionar marcadores
-                if (map) {
-                    console.log(">>> Chamando map.invalidateSize() DENTRO do listener.");
-                    map.invalidateSize();
-                }
-
+                clearDashboardAndMap();
                 if (!allDevices) {
                     console.log(">>> PASSO G1: Nenhum dispositivo.");
                     if(roomPanel) roomPanel.innerHTML = '<p>Nenhum dispositivo encontrado. Adicione um novo!</p>';
@@ -440,7 +506,7 @@
             }
             deviceIdElement.textContent = `Mostrando dados do: ${deviceId}`;
             const ppm = data.ppm; ppmElement.textContent = ppm; 
-            statusElement.className = "value"; // Reseta classes
+            statusElement.className = "value";
             statusElement.classList.remove('status-safe', 'status-warning', 'status-danger');
             if (ppm < 50) { statusElement.textContent = "Seguro"; statusElement.classList.add('status-safe'); }
             else if (ppm < 100) { statusElement.textContent = "Atenção"; statusElement.classList.add('status-warning'); }
@@ -451,7 +517,7 @@
             if (!map || !markers[deviceId]) return;
             if (activeMarker) {
                 if (activeMarker.styleNormal) activeMarker.setStyle(activeMarker.styleNormal);
-                else activeMarker.setStyle({ radius: 8, fillOpacity: 0.8, stroke: false });
+                else activeTrocarker.setStyle({ radius: 8, fillOpacity: 0.8, stroke: false });
             }
             activeMarker = markers[deviceId];
             const ppm = deviceData.ppm; let color = '#28a745';
@@ -478,7 +544,7 @@
                      markers[id].setStyle(styleNormal);
                      console.log(`>>> updateMapMarker: Marcador ${id} ATUALIZADO.`);
                 }
-                markers[id].styleNormal = styleNormal; // Salva o estilo normal
+                markers[id].styleNormal = styleNormal;
                 const popupContent = `<b>Detector:</b> ${id}<br><b>Nível de CO:</b> ${ppm} PPM`;
                 markers[id].bindPopup(popupContent);
                 markers[id].off('click').on('click', () => { highlightDevice(id, data); });
